@@ -301,6 +301,7 @@ public class Client implements ServiceConnection {
             monado = IMonado.Stub.asInterface(service);
             binderSync.notify();
         }
+        Log.i(TAG, "onServiceConnected finished");
     }
 
     /**
