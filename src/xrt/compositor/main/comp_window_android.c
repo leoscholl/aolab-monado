@@ -147,11 +147,13 @@ comp_window_android_init_swapchain(struct comp_target *ct, uint32_t width, uint3
 
 	if (android_globals_get_activity() != NULL) {
 		/* In process: Creating surface from activity */
+		COMP_INFO(cwa->base.base.c, "We have an activity, so assuming in-process.");
 		window = _create_android_window(cwa);
 	} else if (android_custom_surface_can_draw_overlays(android_globals_get_vm(), android_globals_get_context())) {
 		/* Out of process: Create surface */
 		window = _create_android_window(cwa);
 	} else {
+		COMP_INFO(cwa->base.base.c, "No activity, so assuming out-of-process.");
 		/* Out of process: Getting cached surface.
 		 * This loop polls for a surface created by Client.java in blockingConnect.
 		 * TODO: change java code to callback native code to notify Session lifecycle progress, instead
