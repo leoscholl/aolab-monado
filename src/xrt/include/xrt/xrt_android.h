@@ -19,9 +19,32 @@
 extern "C" {
 #endif
 
+struct _ANativeWindow;
 struct _JavaVM;
+struct xrt_instance;
 struct xrt_instance_android;
 struct xrt_instance_info;
+
+/*!
+ * Distinguishes the possible Android surface events from each other.
+ *
+ * Used as a bitmask when registering for callbacks.
+ */
+enum xrt_android_surface_event
+{
+	XRT_ANDROID_SURFACE_EVENT_ACQUIRED = 1 << 0,
+	XRT_ANDROID_SURFACE_EVENT_LOST = 1 << 1,
+};
+
+/*!
+ * A callback type for a handler of Android surface/window events.
+ *
+ * Return false to be removed from the callback list.
+ */
+typedef bool (*xrt_android_surface_event_handler_t)(struct xrt_instance_android *xinst_android,
+                                                    struct _ANativeWindow *window,
+                                                    enum xrt_android_surface_event event,
+                                                    void *userdata);
 
 /*!
  * Distinguishes the possible Android lifecycle events from each other.
@@ -69,15 +92,37 @@ struct xrt_instance_android
 	 * @{
 	 */
 	/*!
+	 * Store the Java VM instance pointer.
+	 *
+	 * @note Code consuming this interface should use xrt_instance_android_store_vm()
+	 *
+	 * @param xinst Pointer to self
+	 *
+	 * @return 0 on success, <0 on error.
+	 */
+	int (*store_vm)(struct xrt_instance *xinst, struct _JavaVM *vm);
+
+	/*!
 	 * Retrieve the stored Java VM instance pointer.
 	 *
 	 * @note Code consuming this interface should use xrt_instance_android_get_vm()
 	 *
 	 * @param xinst_android Pointer to self
 	 *
-	 * @return The VM pointer.
+	 * @return The VM pointer, if stored, otherwise null.
 	 */
 	struct _JavaVM *(*get_vm)(const struct xrt_instance_android *xinst_android);
+
+	/*!
+	 * Store an activity android.content.Context jobject.
+	 *
+	 * @note Code consuming this interface should use xrt_instance_android_store_context()
+	 *
+	 * @param xinst Pointer to self
+	 *
+	 * @return 0 on success, <0 on error.
+	 */
+	int (*store_context)(struct xrt_instance *xinst, void *context);
 
 	/*!
 	 * Retrieve the stored activity android.content.Context jobject.
@@ -128,6 +173,42 @@ struct xrt_instance_android
 	                                                   xrt_android_lifecycle_event_handler_t callback,
 	                                                   enum xrt_android_lifecycle_event event_mask,
 	                                                   void *userdata);
+
+	/*!
+	 * Register a surface event callback.
+	 *
+	 * @note Code consuming this interface should use xrt_instance_android_register_surface_callback()
+	 *
+	 * @param xinst_android Pointer to self
+	 * @param callback Function pointer for callback
+	 * @param event_mask bitwise-OR of one or more values from @ref xrt_android_surface_event
+	 * @param userdata An opaque pointer for use by the callback. Whatever you pass here will be passed to the
+	 * callback when invoked.
+	 *
+	 * @return 0 on success, <0 on error.
+	 */
+	int (*register_surface_callback)(struct xrt_instance_android *xinst_android,
+	                                 xrt_android_surface_event_handler_t callback,
+	                                 enum xrt_android_surface_event event_mask,
+	                                 void *userdata);
+
+	/*!
+	 * Remove a surface event callback that matches the supplied parameters.
+	 *
+	 * @note Code consuming this interface should use xrt_instance_android_remove_surface_callback()
+	 *
+	 * @param xinst_android Pointer to self
+	 * @param callback Function pointer for callback
+	 * @param event_mask bitwise-OR of one or more values from @ref xrt_android_surface_event
+	 * @param userdata An opaque pointer for use by the callback. Whatever you pass here will be passed to the
+	 * callback when invoked.
+	 *
+	 * @return 0 on success, <0 on error.
+	 */
+	int (*remove_surface_callback)(struct xrt_instance_android *xinst_android,
+	                               xrt_android_surface_event_handler_t callback,
+	                               enum xrt_android_surface_event event_mask,
+	                               void *userdata);
 
 	/*!
 	 * @}
