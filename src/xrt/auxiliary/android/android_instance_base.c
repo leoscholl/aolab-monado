@@ -13,6 +13,7 @@
 
 #include "android/android_globals.h"
 #include "android/android_lifecycle_callbacks.h"
+#include "android/android_surface_callbacks.h"
 #include "util/u_logging.h"
 #include "xrt/xrt_instance.h"
 #include "xrt/xrt_android.h"
@@ -87,6 +88,26 @@ base_remove_activity_lifecycle_callback(struct xrt_instance_android *xinst_andro
 	return ret > 0 ? XRT_SUCCESS : XRT_ERROR_ANDROID;
 }
 
+static int
+base_register_surface_callback(struct xrt_instance_android *xinst_android,
+                               xrt_android_surface_event_handler_t callback,
+                               enum xrt_android_surface_event event_mask,
+                               void *userdata)
+{
+	struct android_instance_base *aib = android_instance_base(xinst_android);
+	return android_surface_callbacks_register_callback(aib->surface_callbacks, callback, event_mask, userdata);
+}
+
+static int
+base_remove_surface_callback(struct xrt_instance_android *xinst_android,
+                             xrt_android_surface_event_handler_t callback,
+                             enum xrt_android_surface_event event_mask,
+                             void *userdata)
+{
+	struct android_instance_base *aib = android_instance_base(xinst_android);
+	return android_surface_callbacks_remove_callback(aib->surface_callbacks, callback, event_mask, userdata);
+}
+
 xrt_result_t
 android_instance_base_init(struct android_instance_base *aib,
                            struct xrt_instance *xinst,
@@ -135,12 +156,21 @@ android_instance_base_init(struct android_instance_base *aib,
 	aib->base.register_activity_lifecycle_callback = base_register_activity_lifecycle_callback;
 	aib->base.remove_activity_lifecycle_callback = base_remove_activity_lifecycle_callback;
 
-	// aib->base.register_surface_callback = base_register_surface_callback;
-	// aib->base.remove_surface_callback = base_remove_surface_callback;
+	aib->base.register_surface_callback = base_register_surface_callback;
+	aib->base.remove_surface_callback = base_remove_surface_callback;
 
 	aib->lifecycle_callbacks = android_lifecycle_callbacks_create(&aib->base);
 
 	if (aib->lifecycle_callbacks == NULL) {
+		U_LOG_E("Failed to allocate activity lifecycle callback tracker");
+		return XRT_ERROR_ALLOCATION;
+	}
+
+	aib->surface_callbacks = android_surface_callbacks_create(&aib->base);
+
+	if (aib->surface_callbacks == NULL) {
+		U_LOG_E("Failed to allocate surface lifecycle callback tracker");
+		android_lifecycle_callbacks_destroy(&aib->lifecycle_callbacks);
 		return XRT_ERROR_ALLOCATION;
 	}
 	return XRT_SUCCESS;

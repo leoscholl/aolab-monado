@@ -12,6 +12,7 @@
 
 #include "xrt/xrt_instance.h"
 #include "xrt/xrt_android.h"
+#include "android_surface_callbacks.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,7 @@ struct android_instance_base
 	struct _JavaVM *vm;
 	void *context;
 	struct android_lifecycle_callbacks *lifecycle_callbacks;
+	struct android_surface_callbacks *surface_callbacks;
 };
 
 /*!
