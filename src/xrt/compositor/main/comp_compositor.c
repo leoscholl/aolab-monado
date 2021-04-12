@@ -940,7 +940,8 @@ compositor_init_renderer(struct comp_compositor *c)
 }
 
 xrt_result_t
-comp_main_create_system_compositor(struct xrt_device *xdev,
+comp_main_create_system_compositor(struct xrt_instance *xinst,
+                                   struct xrt_device *xdev,
                                    const struct comp_target_factory *ctf,
                                    struct xrt_system_compositor **out_xsysc)
 {
@@ -960,6 +961,7 @@ comp_main_create_system_compositor(struct xrt_device *xdev,
 	c->base.base.base.destroy = compositor_destroy;
 	c->frame.waited.id = -1;
 	c->frame.rendering.id = -1;
+	c->xinst = xinst;
 	c->xdev = xdev;
 
 	COMP_DEBUG(c, "Doing init %p", (void *)c);
