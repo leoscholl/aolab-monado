@@ -132,6 +132,9 @@ public class Client implements ServiceConnection {
     public int blockingConnect(Context context_, String packageName) {
         Log.i(TAG, "blockingConnect");
 
+        // MonadoView monadoView = MonadoView.attachToActivity(activity);
+        // surfaceHolder = monadoView.waitGetSurfaceHolder(2000);
+
         synchronized (binderSync) {
             if (!bind(context_, packageName)) {
                 Log.e(TAG, "Bind failed immediately");
