@@ -39,7 +39,9 @@ using xrt::auxiliary::android::loadClassFromRuntimeApk;
 struct android_custom_surface
 {
 	explicit android_custom_surface();
+
 	~android_custom_surface();
+
 
 	MonadoView monadoView{};
 	jni::Class monadoViewClass{};
@@ -64,10 +66,9 @@ android_custom_surface::~android_custom_surface()
 	android_surface_callbacks_destroy(&asc);
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_org_freedesktop_monado_auxiliary_MonadoView_surfaceCreatedNative(JNIEnv *env, jobject thiz, jobject surface_holder)
+static void JNICALL
+surface_created_native(JNIEnv *env, jobject thiz, jobject surface_holder)
 {
-	jni::init(env);
 	auto holder = SurfaceHolder{surface_holder};
 	Surface surface = holder.getSurface();
 
@@ -79,9 +80,14 @@ Java_org_freedesktop_monado_auxiliary_MonadoView_surfaceCreatedNative(JNIEnv *en
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_org_freedesktop_monado_auxiliary_MonadoView_surfaceDestroyedNative(JNIEnv *env,
-                                                                        jobject thiz,
-                                                                        jobject surface_holder)
+Java_org_freedesktop_monado_auxiliary_MonadoView_surfaceCreatedNative(JNIEnv *env, jobject thiz, jobject surface_holder)
+{
+	jni::init(env);
+	surface_created_native(env, thiz, surface_holder);
+}
+
+static void JNICALL
+surface_destroyed_native(JNIEnv *env, jobject thiz, jobject surface_holder)
 {
 	jni::init(env);
 	auto holder = SurfaceHolder{surface_holder};
@@ -93,6 +99,57 @@ Java_org_freedesktop_monado_auxiliary_MonadoView_surfaceDestroyedNative(JNIEnv *
 	                                                 XRT_ANDROID_SURFACE_EVENT_LOST);
 	U_LOG_W("Told %d callbacks about losing a surface", callbacks);
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_org_freedesktop_monado_auxiliary_MonadoView_surfaceDestroyedNative(JNIEnv *env,
+                                                                        jobject thiz,
+                                                                        jobject surface_holder)
+{
+	jni::init(env);
+	surface_destroyed_native(env, thiz, surface_holder);
+}
+
+static JNINativeMethod methods[] = {
+    {"surfaceCreatedNative", "(Landroid/view/SurfaceHolder;)V", (void *)&surface_created_native},
+    {"surfaceDestroyedNative", "(Landroid/view/SurfaceHolder;)V", (void *)&surface_destroyed_native},
+};
+
+int
+android_custom_surface_register(struct _JNIEnv *env)
+{
+	jni::init(env);
+	jclass clazz = env->FindClass(MonadoView::getTypeName());
+	if (JNI_OK != env->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0]))) {
+		return -1;
+	}
+	return 0;
+}
+#if 0
+static int load_self(jobject activity) {
+    try {
+        auto info = getAppInfo(XRT_ANDROID_PACKAGE, (jobject) activity);
+        if (info.isNull()) {
+            U_LOG_E("Could not get application info for package '%s'", XRT_ANDROID_PACKAGE);
+            return -1;
+        }
+
+        auto clazz = loadClassFromPackage(info, (jobject) activity, FULLY_QUALIFIED_CLASSNAME);
+
+        if (clazz.isNull()) {
+            U_LOG_E("Could not load class '%s' from package '%s'", FULLY_QUALIFIED_CLASSNAME,
+                    XRT_ANDROID_PACKAGE);
+            return -1;
+        }
+
+        // Teach the wrapper our class before we start to use it.
+        MonadoView::staticInitClass((jclass) clazz.object().getHandle());
+    } catch (std::exception const &e) {
+
+        U_LOG_E("Could not start attaching our custom surface to activity: %s", e.what());
+        return nullptr;
+    }
+}
+#endif
 
 struct android_custom_surface *
 android_custom_surface_async_start(
@@ -109,6 +166,12 @@ android_custom_surface_async_start(
 
 		// Teach the wrapper our class before we start to use it.
 		MonadoView::staticInitClass((jclass)clazz.object().getHandle());
+		// // Manually register these native methods, since the way we're being loaded prevents automatic
+		// loading
+		//		android_custom_surface_register(jni::env());
+		jni::env()->RegisterNatives((jclass)clazz.object().getHandle(), methods,
+		                            sizeof(methods) / sizeof(methods[0]));
+
 		std::unique_ptr<android_custom_surface> ret = std::make_unique<android_custom_surface>();
 
 		// the 0 is to avoid this being considered "temporary" and to
@@ -292,6 +355,7 @@ android_custom_surface_get_display_metrics(struct _JavaVM *vm,
 		return false;
 	}
 }
+
 
 bool
 android_custom_surface_can_draw_overlays(struct _JavaVM *vm, void *context)

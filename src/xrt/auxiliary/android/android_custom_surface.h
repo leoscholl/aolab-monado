@@ -45,6 +45,30 @@ struct xrt_android_display_metrics
 struct android_custom_surface;
 
 /*!
+ * @brief Register the native methods for org.freedesktop.monado.auxiliary.MonadoView.
+ *
+ * If this is loaded dynamically into another process, you'll need to call this, the auto-finding won't find it.
+ *
+ * @param env JNI environment pointer
+ *
+ * @public @memberof android_custom_surface
+ */
+int
+android_custom_surface_register(struct _JNIEnv *env);
+
+/*!
+ * @brief Register the native methods for org.freedesktop.monado.auxiliary.MonadoView.
+ *
+ * If this is loaded dynamically into another process, you'll need to call this, the auto-finding won't find it.
+ *
+ * @param env JNI environment pointer
+ *
+ * @public @memberof android_custom_surface
+ */
+int
+android_custom_surface_register(struct _JNIEnv *env);
+
+/*!
  * Start adding a custom surface to a window.
  *
  * This is an asynchronous operation, so this creates an opaque pointer for you
@@ -113,9 +137,9 @@ android_custom_surface_wait_get_surface(struct android_custom_surface *custom_su
  */
 int
 android_custom_surface_register_callback(struct android_custom_surface *custom_surface,
-                                            xrt_android_surface_event_handler_t callback,
-                                            enum xrt_android_surface_event event_mask,
-                                            void *userdata);
+                                         xrt_android_surface_event_handler_t callback,
+                                         enum xrt_android_surface_event event_mask,
+                                         void *userdata);
 
 /*!
  * Remove a surface event callback that matches the supplied parameters.
@@ -131,9 +155,9 @@ android_custom_surface_register_callback(struct android_custom_surface *custom_s
  */
 int
 android_custom_surface_remove_callback(struct android_custom_surface *custom_surface,
-                                          xrt_android_surface_event_handler_t callback,
-                                          enum xrt_android_surface_event event_mask,
-                                          void *userdata);
+                                       xrt_android_surface_event_handler_t callback,
+                                       enum xrt_android_surface_event event_mask,
+                                       void *userdata);
 
 bool
 android_custom_surface_get_display_metrics(struct _JavaVM *vm,
