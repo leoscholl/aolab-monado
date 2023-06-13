@@ -120,10 +120,10 @@ vive_device_get_3dof_tracked_pose(struct xrt_device *xdev,
 	}
 
 	struct xrt_space_relation relation = {0};
-	relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL;
+	relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME;
 
 	m_relation_history_get(d->fusion.relation_hist, at_timestamp_ns, &relation);
-	relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL; // Needed after history_get
+	relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME; // Needed after history_get
 	relation.pose.position = d->pose.position;
 	relation.linear_velocity = (struct xrt_vec3){0, 0, 0};
 

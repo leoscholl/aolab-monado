@@ -634,13 +634,21 @@ enum xrt_space_relation_flags
 	XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT =     (1u << 3u),
 	XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT =        (1u << 4u),
 	XRT_SPACE_RELATION_POSITION_TRACKED_BIT =           (1u << 5u),
+	XRT_SPACE_RELATION_SAMPLE_TIME_VALID_BIT =          (1u << 6u),
 	// clang-format on
-	XRT_SPACE_RELATION_BITMASK_ALL = (uint32_t)XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |      //
-	                                 (uint32_t)XRT_SPACE_RELATION_POSITION_VALID_BIT |         //
-	                                 (uint32_t)XRT_SPACE_RELATION_LINEAR_VELOCITY_VALID_BIT |  //
-	                                 (uint32_t)XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT | //
-	                                 (uint32_t)XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |    //
-	                                 (uint32_t)XRT_SPACE_RELATION_POSITION_TRACKED_BIT,
+
+	XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME =          //
+	(uint32_t)XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |      //
+	(uint32_t)XRT_SPACE_RELATION_POSITION_VALID_BIT |         //
+	(uint32_t)XRT_SPACE_RELATION_LINEAR_VELOCITY_VALID_BIT |  //
+	(uint32_t)XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT | //
+	(uint32_t)XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |    //
+	(uint32_t)XRT_SPACE_RELATION_POSITION_TRACKED_BIT,        //
+
+	XRT_SPACE_RELATION_BITMASK_ALL =                           //
+	(uint32_t)XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME | //
+	(uint32_t)XRT_SPACE_RELATION_SAMPLE_TIME_VALID_BIT,        //
+
 	XRT_SPACE_RELATION_BITMASK_NONE = 0,
 };
 
@@ -659,6 +667,8 @@ struct xrt_space_relation
 	struct xrt_pose pose;
 	struct xrt_vec3 linear_velocity;
 	struct xrt_vec3 angular_velocity;
+	// A monotonic timestamp
+	uint64_t sample_time_ns;
 };
 
 /*!
@@ -672,7 +682,7 @@ struct xrt_space_relation
  */
 #define XRT_SPACE_RELATION_ZERO                                                                                        \
 	{                                                                                                              \
-		XRT_SPACE_RELATION_BITMASK_NONE, XRT_POSE_IDENTITY, XRT_VEC3_ZERO, XRT_VEC3_ZERO                       \
+		XRT_SPACE_RELATION_BITMASK_NONE, XRT_POSE_IDENTITY, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0                    \
 	}
 
 /*!

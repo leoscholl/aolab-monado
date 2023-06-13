@@ -66,10 +66,7 @@ m_space_relation_from_pose(const struct xrt_pose *pose, bool set_tracked, struct
 	                                                  XRT_SPACE_RELATION_POSITION_VALID_BIT);
 
 	struct xrt_space_relation relation = {
-	    flags,
-	    *pose,
-	    XRT_VEC3_ZERO,
-	    XRT_VEC3_ZERO,
+	    flags, *pose, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0,
 	};
 
 	*out_relation = relation;
