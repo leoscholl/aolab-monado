@@ -261,7 +261,8 @@ oxr_session_begin(struct oxr_logger *log, struct oxr_session *sess, const XrSess
 		oxr_session_change_state(log, sess, XR_SESSION_STATE_VISIBLE, 0);
 		oxr_session_change_state(log, sess, XR_SESSION_STATE_FOCUSED, 0);
 	}
-
+	// start synchronization primitive
+	os_synchronization_begin(&sess->osh);
 	sess->has_begun = true;
 
 	return oxr_session_success_result(sess);
@@ -324,7 +325,8 @@ oxr_session_end(struct oxr_logger *log, struct oxr_session *sess)
 		oxr_session_change_state(log, sess, XR_SESSION_STATE_READY, 0);
 #endif // !XRT_OS_ANDROID
 	}
-
+	// end synchronization primitive
+	os_synchronization_end(&sess->osh);
 	sess->has_begun = false;
 	sess->has_ended_once = false;
 
@@ -789,7 +791,11 @@ oxr_session_frame_wait(struct oxr_logger *log, struct oxr_session *sess, XrFrame
 	 * multiple threads. We do this before so we call predicted after any
 	 * waiting for xrBeginFrame has happened, for better timing information.
 	 */
-	os_semaphore_wait(&sess->sem, 0);
+	XrResult osh_ret = os_synchronization_wait(&sess->osh);
+	if (XR_SUCCESS != osh_ret) {
+		// session not running
+		return osh_ret;
+	}
 
 	if (sess->frame_timing_spew) {
 		oxr_log(log, "Finished waiting for previous frame begin at %8.3fms", ts_ms(sess));
@@ -809,8 +815,11 @@ oxr_session_frame_wait(struct oxr_logger *log, struct oxr_session *sess, XrFrame
 	    &converted_time);                    // out_converted_time
 	if (ret != XR_SUCCESS) {
 		// On error we need to release the semaphore ourselves as xrBeginFrame won't do it.
-		os_semaphore_release(&sess->sem);
-
+        osh_ret = os_synchronization_release(&sess->osh);
+		if (XR_SUCCESS != osh_ret) {
+			// session not running
+			return osh_ret;
+		}
 		// Error already logged.
 		return ret;
 	}
@@ -892,7 +901,11 @@ oxr_session_frame_begin(struct oxr_logger *log, struct oxr_session *sess)
 		sess->frame_id.waited = -1;
 	}
 
-	os_semaphore_release(&sess->sem);
+	XrResult osh_ret = os_synchronization_release(&sess->osh);
+	if (XR_SUCCESS != osh_ret) {
+		// session not running
+		return osh_ret;
+	}
 
 	return ret;
 }
@@ -925,7 +938,7 @@ oxr_session_destroy(struct oxr_logger *log, struct oxr_handle_base *hb)
 	xrt_session_destroy(&sess->xs);
 
 	os_precise_sleeper_deinit(&sess->sleeper);
-	os_semaphore_destroy(&sess->sem);
+	os_synchronization_destroy(&sess->osh);
 	os_mutex_destroy(&sess->active_wait_frames_lock);
 
 	free(sess);
@@ -949,7 +962,7 @@ oxr_session_allocate_and_init(struct oxr_logger *log,
 	sess->sys = sys;
 
 	// Init the begin/wait frame semaphore and related fields.
-	os_semaphore_init(&sess->sem, 1);
+	os_synchronization_init(&sess->osh);
 
 	// Init the wait frame precise sleeper.
 	os_precise_sleeper_init(&sess->sleeper);
