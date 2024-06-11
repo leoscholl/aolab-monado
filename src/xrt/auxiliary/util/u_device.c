@@ -523,16 +523,6 @@ u_device_ni_compute_distortion(
 	return false;
 }
 
-xrt_result_t
-u_device_ni_get_visibility_mask(struct xrt_device *xdev,
-                                enum xrt_visibility_mask_type type,
-                                uint32_t view_index,
-                                struct xrt_visibility_mask **out_mask)
-{
-	E(get_visibility_mask);
-	return XRT_ERROR_DEVICE_FUNCTION_NOT_IMPLEMENTED;
-}
-
 bool
 u_device_ni_is_form_factor_available(struct xrt_device *xdev, enum xrt_form_factor form_factor)
 {

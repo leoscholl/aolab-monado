@@ -241,17 +241,6 @@ u_device_ni_compute_distortion(
     struct xrt_device *xdev, uint32_t view, float u, float v, struct xrt_uv_triplet *out_result);
 
 /*!
- * Not implemented function for @ref xrt_device::get_visibility_mask.
- *
- * @ingroup aux_util
- */
-xrt_result_t
-u_device_ni_get_visibility_mask(struct xrt_device *xdev,
-                                enum xrt_visibility_mask_type type,
-                                uint32_t view_index,
-                                struct xrt_visibility_mask **out_mask);
-
-/*!
  * Not implemented function for @ref xrt_device::is_form_factor_available.
  *
  * @ingroup aux_util
