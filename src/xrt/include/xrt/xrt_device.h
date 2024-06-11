@@ -279,6 +279,8 @@ struct xrt_device
 	/*!
 	 * Update any attached inputs.
 	 *
+	 * Optional function, no-op if not set by the implementation.
+	 *
 	 * @param[in] xdev        The device.
 	 */
 	void (*update_inputs)(struct xrt_device *xdev);
@@ -520,7 +522,9 @@ struct xrt_device
 static inline void
 xrt_device_update_inputs(struct xrt_device *xdev)
 {
-	xdev->update_inputs(xdev);
+	if (xdev->update_inputs != NULL) {
+		xdev->update_inputs(xdev);
+	}
 }
 
 /*!
