@@ -90,8 +90,8 @@ sample_hmd_update_inputs(struct xrt_device *xdev)
 {
 	/*
 	 * Empty for the sample driver, if you need to you should
-	 * put code to update the attached inputs fields. If not you can use
-	 * the u_device_noop_update_inputs helper to make it a no-op.
+	 * put code to update the attached inputs fields.
+	 * If not you can let the function pointer empty to make it a no-op.
 	 */
 }
 

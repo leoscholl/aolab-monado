@@ -144,7 +144,6 @@ r_hmd_create(struct r_hub *r)
 	    struct r_hmd, flags, input_count, output_count);
 
 	// Setup the basics.
-	rh->base.update_inputs = u_device_noop_update_inputs;
 	rh->base.get_tracked_pose = r_hmd_get_tracked_pose;
 	rh->base.get_hand_tracking = r_hmd_get_hand_tracking;
 	rh->base.get_view_poses = r_hmd_get_view_poses;

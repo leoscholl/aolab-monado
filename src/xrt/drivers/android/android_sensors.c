@@ -215,7 +215,6 @@ android_device_create()
 
 	d->base.name = XRT_DEVICE_GENERIC_HMD;
 	d->base.destroy = android_device_destroy;
-	d->base.update_inputs = u_device_noop_update_inputs;
 	d->base.get_tracked_pose = android_device_get_tracked_pose;
 	d->base.get_view_poses = u_device_get_view_poses;
 	d->base.compute_distortion = android_device_compute_distortion;

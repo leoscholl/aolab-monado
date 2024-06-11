@@ -154,7 +154,6 @@ illixr_hmd_create(const char *path_in, const char *comp_in)
 	enum u_device_alloc_flags flags =
 	    (enum u_device_alloc_flags)(U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE);
 	dh = U_DEVICE_ALLOCATE(struct illixr_hmd, flags, 1, 0);
-	dh->base.update_inputs = u_device_noop_update_inputs;
 	dh->base.get_tracked_pose = illixr_hmd_get_tracked_pose;
 	dh->base.get_view_poses = u_device_get_view_poses;
 	dh->base.destroy = illixr_hmd_destroy;

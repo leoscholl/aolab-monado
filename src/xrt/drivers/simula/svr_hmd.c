@@ -222,9 +222,6 @@ svr_hmd_create(struct svr_two_displays_distortion *distortion)
 
 	svr->log_level = debug_get_log_option_svr_log();
 
-
-
-	svr->base.update_inputs = u_device_noop_update_inputs;
 	svr->base.get_tracked_pose = svr_hmd_get_tracked_pose;
 	svr->base.get_view_poses = svr_hmd_get_view_poses;
 	svr->base.destroy = svr_hmd_destroy;

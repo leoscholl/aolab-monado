@@ -212,7 +212,6 @@ rift_s_hmd_create(struct rift_s_system *sys, const unsigned char *hmd_serial_no,
 
 	hmd->base.tracking_origin = &sys->base;
 
-	hmd->base.update_inputs = u_device_noop_update_inputs;
 	hmd->base.get_tracked_pose = rift_s_get_tracked_pose;
 	hmd->base.get_view_poses = u_device_get_view_poses;
 	hmd->base.destroy = rift_s_hmd_destroy;

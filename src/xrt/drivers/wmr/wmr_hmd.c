@@ -1943,7 +1943,6 @@ wmr_hmd_create(enum wmr_headset_type hmd_type,
 	}
 
 	// Populate the base members.
-	wh->base.update_inputs = u_device_noop_update_inputs;
 	wh->base.get_tracked_pose = wmr_hmd_get_tracked_pose;
 	wh->base.get_view_poses = u_device_get_view_poses;
 	wh->base.destroy = wmr_hmd_destroy;

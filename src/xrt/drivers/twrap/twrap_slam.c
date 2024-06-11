@@ -163,12 +163,8 @@ twrap_slam_create_device(struct xrt_frame_context *xfctx,
 {
 	struct slam_device *dx = U_DEVICE_ALLOCATE(struct slam_device, U_DEVICE_ALLOC_TRACKING_NONE, 1, 0);
 
-
 	dx->log_level = debug_get_log_option_slam_log();
 
-
-
-	dx->base.update_inputs = u_device_noop_update_inputs;
 	dx->base.get_tracked_pose = twrap_slam_get_tracked_pose;
 	dx->base.get_view_poses = twrap_slam_get_view_poses;
 	dx->base.destroy = twrap_slam_destroy;
@@ -179,8 +175,6 @@ twrap_slam_create_device(struct xrt_frame_context *xfctx,
 	dx->base.orientation_tracking_supported = true;
 	dx->base.position_tracking_supported = true;
 	dx->base.device_type = XRT_DEVICE_TYPE_GENERIC_TRACKER;
-
-
 
 	// Print name.
 	snprintf(dx->base.str, XRT_DEVICE_NAME_LEN, "Generic Inside-Out Head Tracker");
