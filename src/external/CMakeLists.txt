@@ -211,3 +211,8 @@ add_library(xrt-external-vdf INTERFACE)
 target_include_directories(
 	xrt-external-vdf SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/valve-file-vdf
 	)
+
+# SolarXR codegen
+if(XRT_BUILD_DRIVER_SOLARXR)
+	add_subdirectory(solarxr)
+endif()

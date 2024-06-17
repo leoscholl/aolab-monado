@@ -1,0 +1,788 @@
+// Copyright 2022, Ryan Butler
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+// derived from https://github.com/SlimeVR/SolarXR-Protocol/tree/f74a0fd4e4c6968f9b8e56ac56ad30242dca2867/schema
+// combined and adapted to work with FlatCC
+
+namespace solarxr_protocol.datatypes;
+struct HzF32 {
+    f: float32;
+}
+struct TransactionId {
+    id: uint32;
+}
+struct DeviceId {
+    id: uint8;
+}
+table TrackerId {
+    device_id: solarxr_protocol.datatypes.DeviceId;
+    tracker_num: uint8;
+}
+table LogData {
+    message: string;
+    data: [uint8];
+}
+enum FirmwareErrorCode: uint8 {
+    Other = 0,
+    Disconnected,
+    Occluded,
+    ImuError,
+}
+enum FilteringType: uint8 {
+ NONE = 0,
+ SMOOTHING = 1,
+ PREDICTION = 2
+}
+enum TrackerRole: uint8 {
+    NONE = 0,
+    WAIST = 1,
+    LEFT_FOOT = 2,
+    RIGHT_FOOT = 3,
+    CHEST = 4,
+    LEFT_KNEE = 5,
+    RIGHT_KNEE = 6,
+    LEFT_ELBOW = 7,
+    RIGHT_ELBOW = 8,
+    LEFT_SHOULDER = 9,
+    RIGHT_SHOULDER = 10,
+    LEFT_HAND = 11,
+    RIGHT_HAND = 12,
+    LEFT_CONTROLLER = 13,
+    RIGHT_CONTROLLER = 14,
+    HEAD = 15,
+    NECK = 16,
+    CAMERA = 17,
+    KEYBOARD = 18,
+    HMD = 19,
+    BEACON = 20,
+    GENERIC_CONTROLLER = 21,
+}
+enum BodyPart: uint8 {
+    NONE = 0,
+    HEAD = 1,
+    NECK = 2,
+    CHEST = 3,
+    WAIST = 4,
+    HIP = 5,
+    LEFT_UPPER_LEG = 6,
+    RIGHT_UPPER_LEG = 7,
+    LEFT_LOWER_LEG = 8,
+    RIGHT_LOWER_LEG = 9,
+    LEFT_FOOT = 10,
+    RIGHT_FOOT = 11,
+    LEFT_LOWER_ARM = 14,
+    RIGHT_LOWER_ARM = 15,
+    LEFT_UPPER_ARM = 16,
+    RIGHT_UPPER_ARM = 17,
+    LEFT_HAND = 18,
+    RIGHT_HAND = 19,
+    LEFT_SHOULDER = 20,
+    RIGHT_SHOULDER = 21,
+    UPPER_CHEST = 22,
+    LEFT_HIP = 23,
+    RIGHT_HIP = 24,
+}
+enum TrackerStatus: uint8 {
+    NONE = 0,
+    DISCONNECTED = 1,
+    OK = 2,
+    BUSY = 3,
+    ERROR = 4,
+    OCCLUDED = 5,
+    TIMED_OUT = 6,
+}
+struct Temperature {
+    temp: float32;
+}
+struct Ipv4Address {
+    addr: uint32;
+}
+table Bytes {
+    b: [uint8];
+}
+table StringTable {
+    s: string;
+}
+
+namespace solarxr_protocol.datatypes.hardware_info;
+enum McuType: uint16 {
+    Other = 0,
+    ESP8266,
+    ESP32,
+    OWOTRACK_ANDROID,
+    WRANGLER,
+    OWOTRACK_IOS,
+    ESP32_C3,
+    MOCOPI,
+    DEV_RESERVED = 250,
+}
+enum ImuType: uint16 {
+    Other = 0,
+    MPU9250,
+    MPU6500,
+    BNO080,
+    BNO085,
+    BNO055,
+    MPU6050,
+    BNO086,
+    BMI160,
+    ICM20948,
+    ICM42688,
+}
+struct HardwareAddress {
+    addr: uint64;
+}
+table HardwareInfo {
+    mcu_id: McuType;
+    display_name: string;
+    model: string;
+    manufacturer: string;
+    hardware_revision: string;
+    firmware_version: string;
+    hardware_address: HardwareAddress;
+    ip_address: solarxr_protocol.datatypes.Ipv4Address;
+    board_type: string;
+    hardware_identifier: string;
+    network_protocol_version: uint16 = null;
+}
+table HardwareStatus {
+    error_status: solarxr_protocol.datatypes.FirmwareErrorCode = null;
+    tps: uint8 = null (deprecated);
+    ping: uint16 = null;
+    rssi: int16 = null;
+    mcu_temp: float32 = null;
+    battery_voltage: float32 = null;
+    battery_pct_estimate: uint8 = null;
+    log_data: solarxr_protocol.datatypes.LogData;
+}
+table FirmwareStatusMask {
+    error_status: bool;
+    tps: bool;
+    ping: bool;
+    rssi: bool;
+    mcu_temp: bool;
+    battery_voltage: bool;
+    battery_pct_estimate: bool;
+}
+
+
+
+namespace solarxr_protocol.datatypes.math;
+struct Quat {
+    x: float32;
+    y: float32;
+    z: float32;
+    w: float32;
+}
+struct Vec3f {
+    x: float32;
+    y: float32;
+    z: float32;
+}
+namespace solarxr_protocol.data_feed.tracker;
+table TrackerData {
+    tracker_id: solarxr_protocol.datatypes.TrackerId;
+    info: TrackerInfo;
+    status: solarxr_protocol.datatypes.TrackerStatus;
+    rotation: solarxr_protocol.datatypes.math.Quat;
+    position: solarxr_protocol.datatypes.math.Vec3f;
+    raw_angular_velocity: solarxr_protocol.datatypes.math.Vec3f;
+    raw_acceleration: solarxr_protocol.datatypes.math.Vec3f;
+    temp: solarxr_protocol.datatypes.Temperature;
+    linear_acceleration: solarxr_protocol.datatypes.math.Vec3f;
+    rotation_reference_adjusted: solarxr_protocol.datatypes.math.Quat;
+    rotation_identity_adjusted: solarxr_protocol.datatypes.math.Quat;
+    tps: uint16 = null;
+}
+table TrackerDataMask {
+    info: bool;
+    status: bool;
+    rotation: bool;
+    position: bool;
+    raw_angular_velocity: bool;
+    raw_acceleration: bool;
+    temp: bool;
+    linear_acceleration: bool;
+    rotation_reference_adjusted: bool;
+    rotation_identity_adjusted: bool;
+    tps: bool;
+}
+table TrackerInfo {
+    imu_type: solarxr_protocol.datatypes.hardware_info.ImuType;
+    body_part: solarxr_protocol.datatypes.BodyPart;
+    poll_rate: solarxr_protocol.datatypes.HzF32;
+    mounting_orientation: solarxr_protocol.datatypes.math.Quat;
+    editable: bool;
+    is_computed: bool;
+    is_imu: bool;
+    display_name: string;
+    custom_name: string;
+    allow_drift_compensation: bool;
+    mounting_reset_orientation: solarxr_protocol.datatypes.math.Quat;
+    is_hmd: bool;
+}
+namespace solarxr_protocol.data_feed.device_data;
+table DeviceDataMask {
+    tracker_data: solarxr_protocol.data_feed.tracker.TrackerDataMask;
+    device_data: bool;
+}
+table DeviceData {
+    id: solarxr_protocol.datatypes.DeviceId;
+    custom_name: string;
+    hardware_info: solarxr_protocol.datatypes.hardware_info.HardwareInfo;
+    hardware_status: solarxr_protocol.datatypes.hardware_info.HardwareStatus;
+    trackers: [solarxr_protocol.data_feed.tracker.TrackerData];
+}
+namespace solarxr_protocol.data_feed;
+table Bone {
+    body_part: solarxr_protocol.datatypes.BodyPart;
+    rotation_g: solarxr_protocol.datatypes.math.Quat;
+    bone_length: float32;
+    head_position_g: solarxr_protocol.datatypes.math.Vec3f;
+}
+
+namespace solarxr_protocol.data_feed;
+union DataFeedMessage {
+    PollDataFeed,
+    StartDataFeed,
+    DataFeedUpdate,
+    DataFeedConfig,
+}
+table DataFeedMessageHeader {
+    message: DataFeedMessage;
+}
+table PollDataFeed {
+    config: DataFeedConfig;
+}
+table StartDataFeed {
+    data_feeds: [DataFeedConfig];
+}
+table DataFeedUpdate {
+    devices: [solarxr_protocol.data_feed.device_data.DeviceData];
+    synthetic_trackers: [solarxr_protocol.data_feed.tracker.TrackerData];
+    bones: [solarxr_protocol.data_feed.Bone];
+}
+table DataFeedConfig {
+    minimum_time_since_last: uint16 = 0;
+    data_mask: solarxr_protocol.data_feed.device_data.DeviceDataMask;
+    synthetic_trackers_mask: solarxr_protocol.data_feed.tracker.TrackerDataMask;
+    bone_mask: bool;
+}
+
+namespace solarxr_protocol.rpc.settings;
+table ModelToggles{
+    extended_spine: bool = null;
+    extended_pelvis: bool = null;
+    extended_knee: bool = null;
+    force_arms_from_hmd: bool = null;
+    floor_clip: bool = null;
+    skating_correction: bool = null;
+    vive_emulation: bool = null;
+    toe_snap: bool = null;
+    foot_plant: bool = null;
+    self_localization: bool = null;
+}
+table ModelRatios{
+    impute_waist_from_chest_hip: float32 = null;
+    impute_waist_from_chest_legs: float32 = null;
+    impute_hip_from_chest_legs: float32 = null;
+    impute_hip_from_waist_legs: float32 = null;
+    interp_hip_legs: float32 = null;
+    interp_knee_tracker_ankle: float32 = null;
+    interp_knee_ankle: float32 = null;
+}
+table LegTweaksSettings{
+    correction_strength: float32 = null;
+}
+table ModelSettings {
+    toggles: ModelToggles;
+    ratios: ModelRatios;
+    leg_tweaks: LegTweaksSettings;
+}
+
+namespace solarxr_protocol.rpc;
+union RpcMessage {
+    HeartbeatRequest,
+    HeartbeatResponse,
+    ResetRequest,
+    ResetResponse,
+    AssignTrackerRequest,
+    SettingsRequest,
+    SettingsResponse,
+    ChangeSettingsRequest,
+    ClearDriftCompensationRequest,
+    RecordBVHRequest,
+    RecordBVHStatus,
+    SkeletonConfigRequest,
+    ChangeSkeletonConfigRequest,
+    SkeletonResetAllRequest,
+    SkeletonConfigResponse,
+    OpenSerialRequest,
+    CloseSerialRequest,
+    SetWifiRequest,
+    SerialUpdateResponse,
+    AutoBoneProcessRequest,
+    AutoBoneProcessStatusResponse,
+    AutoBoneEpochResponse,
+    OverlayDisplayModeRequest,
+    OverlayDisplayModeChangeRequest,
+    OverlayDisplayModeResponse,
+    SerialTrackerRebootRequest,
+    SerialTrackerGetInfoRequest,
+    SerialTrackerFactoryResetRequest,
+    SerialDevicesRequest,
+    SerialDevicesResponse,
+    NewSerialDeviceResponse,
+    StartWifiProvisioningRequest,
+    StopWifiProvisioningRequest,
+    WifiProvisioningStatusResponse,
+    ServerInfosRequest,
+    ServerInfosResponse,
+    LegTweaksTmpChange,
+    LegTweaksTmpClear,
+    TapDetectionSetupNotification,
+    SetPauseTrackingRequest,
+    StatusSystemRequest,
+    StatusSystemResponse,
+    StatusSystemUpdate,
+    StatusSystemFixed,
+    ClearMountingResetRequest,
+    HeightRequest,
+    HeightResponse,
+    AutoBoneApplyRequest,
+    AutoBoneStopRecordingRequest,
+    AutoBoneCancelRecordingRequest,
+    SaveFileNotification,
+    TrackingPauseStateRequest,
+    TrackingPauseStateResponse,
+    SerialTrackerGetWifiScanRequest,
+    UnknownDeviceHandshakeNotification,
+    AddUnknownDeviceRequest,
+    ForgetDeviceRequest,
+}
+table RpcMessageHeader {
+    tx_id: solarxr_protocol.datatypes.TransactionId;
+    message: RpcMessage;
+}
+table HeartbeatRequest {}
+table HeartbeatResponse {}
+enum ResetType: uint8 {
+    Yaw,
+    Full,
+    Mounting,
+}
+enum ResetStatus: uint8 {
+    STARTED,
+    FINISHED,
+}
+table ResetRequest {
+    reset_type: ResetType;
+}
+table ResetResponse {
+    reset_type: ResetType;
+    status: ResetStatus;
+}
+table AssignTrackerRequest {
+    tracker_id: solarxr_protocol.datatypes.TrackerId;
+    body_position: solarxr_protocol.datatypes.BodyPart;
+    mounting_orientation: solarxr_protocol.datatypes.math.Quat;
+    display_name: string;
+    allow_drift_compensation: bool;
+}
+table ClearDriftCompensationRequest {}
+table SettingsRequest {}
+table SettingsResponse {
+    steam_vr_trackers: SteamVRTrackersSetting;
+    filtering: FilteringSettings;
+    drift_compensation: DriftCompensationSettings;
+    osc_router: OSCRouterSettings;
+    vrc_osc: VRCOSCSettings;
+    vmc_osc: VMCOSCSettings;
+    model_settings: solarxr_protocol.rpc.settings.ModelSettings;
+    tap_detection_settings: TapDetectionSettings;
+    auto_bone_settings: AutoBoneSettings;
+    resets_settings: ResetsSettings;
+}
+table ChangeSettingsRequest {
+    steam_vr_trackers: SteamVRTrackersSetting;
+    filtering: FilteringSettings;
+    drift_compensation: DriftCompensationSettings;
+    osc_router: OSCRouterSettings;
+    vrc_osc: VRCOSCSettings;
+    vmc_osc: VMCOSCSettings;
+    model_settings: solarxr_protocol.rpc.settings.ModelSettings;
+    tap_detection_settings: TapDetectionSettings;
+    auto_bone_settings: AutoBoneSettings;
+    resets_settings: ResetsSettings;
+}
+table SteamVRTrackersSetting {
+    waist: bool;
+    chest: bool;
+    feet: bool (deprecated);
+    knees: bool (deprecated);
+    elbows: bool (deprecated);
+    hands: bool (deprecated);
+    automaticTrackerToggle: bool;
+    left_foot: bool;
+    right_foot: bool;
+    left_knee: bool;
+    right_knee: bool;
+    left_elbow: bool;
+    right_elbow: bool;
+    left_hand: bool;
+    right_hand: bool;
+}
+table FilteringSettings {
+    type: solarxr_protocol.datatypes.FilteringType;
+    amount: float32;
+}
+table DriftCompensationSettings {
+    enabled: bool;
+    amount: float32;
+    max_resets: uint16;
+}
+table OSCRouterSettings {
+    osc_settings: OSCSettings;
+}
+table VRCOSCSettings {
+    osc_settings: OSCSettings;
+    trackers: OSCTrackersSetting;
+}
+table VMCOSCSettings {
+    osc_settings: OSCSettings;
+    vrm_json: string;
+    anchor_hip: bool;
+    mirror_tracking: bool;
+}
+table OSCSettings {
+    enabled: bool;
+    port_in: uint16;
+    port_out: uint16;
+    address: string;
+}
+table OSCTrackersSetting {
+    head: bool;
+    chest: bool;
+    waist: bool;
+    knees: bool;
+    feet: bool;
+    elbows: bool;
+    hands: bool;
+}
+table TapDetectionSettings {
+    full_reset_delay: float = null;
+    full_reset_enabled: bool = null;
+    full_reset_taps: uint8 = null;
+    yaw_reset_delay: float = null;
+    yaw_reset_enabled: bool = null;
+    yaw_reset_taps: uint8 = null;
+    mounting_reset_delay: float = null;
+    mounting_reset_enabled: bool = null;
+    mounting_reset_taps: uint8 = null;
+    setup_mode: bool = null;
+    number_trackers_over_threshold: uint8 = null;
+}
+enum ArmsMountingResetMode: uint8 {
+    BACK,
+    FORWARD,
+    TPOSE_UP,
+    TPOSE_DOWN
+}
+table ResetsSettings {
+    reset_mounting_feet: bool;
+    arms_mounting_reset_mode: ArmsMountingResetMode;
+    yaw_reset_smooth_time: float32;
+    save_mounting_reset: bool;
+    reset_hmd_pitch: bool;
+}
+table TapDetectionSetupNotification {
+    tracker_id: solarxr_protocol.datatypes.TrackerId;
+}
+table RecordBVHRequest {
+    stop: bool;
+}
+table RecordBVHStatus {
+    recording: bool;
+}
+enum SkeletonBone: uint8 {
+    NONE = 0,
+    HEAD = 1,
+    NECK = 2,
+    CHEST = 3,
+    CHEST_OFFSET = 4,
+    WAIST = 5,
+    HIP = 6,
+    HIP_OFFSET = 7,
+    HIPS_WIDTH = 8,
+    UPPER_LEG = 9,
+    LOWER_LEG = 10,
+    FOOT_LENGTH = 11,
+    FOOT_SHIFT = 12,
+    SKELETON_OFFSET = 13,
+    SHOULDERS_DISTANCE = 14,
+    SHOULDERS_WIDTH = 15,
+    UPPER_ARM = 16,
+    LOWER_ARM = 17,
+    HAND_Y = 18,
+    HAND_Z = 19,
+    ELBOW_OFFSET = 20,
+    UPPER_CHEST = 21,
+}
+table SkeletonPart {
+    bone: SkeletonBone;
+    value: float;
+}
+table SkeletonConfigRequest {}
+table SkeletonConfigResponse {
+    skeleton_parts: [SkeletonPart];
+}
+table SkeletonResetAllRequest {}
+table ChangeSkeletonConfigRequest {
+    bone: SkeletonBone;
+    value: float;
+}
+table SerialDevice {
+    port: string;
+    name: string;
+}
+table OpenSerialRequest {
+    auto: bool;
+    port: string;
+}
+table CloseSerialRequest {}
+table SetWifiRequest {
+    ssid: string;
+    password: string;
+}
+table SerialUpdateResponse {
+    log: string;
+    closed: bool;
+}
+table SerialTrackerRebootRequest {}
+table SerialTrackerGetInfoRequest {}
+table SerialTrackerFactoryResetRequest {}
+table SerialDevicesRequest {}
+table SerialDevicesResponse {
+    devices: [SerialDevice];
+}
+table NewSerialDeviceResponse {
+    device: SerialDevice;
+}
+table StartWifiProvisioningRequest {
+    ssid: string;
+    password: string;
+    port: string;
+}
+table StopWifiProvisioningRequest {}
+enum WifiProvisioningStatus: uint8 {
+    NONE = 0,
+    SERIAL_INIT = 1,
+    PROVISIONING = 2,
+    CONNECTING = 3,
+    CONNECTION_ERROR = 4,
+    LOOKING_FOR_SERVER = 5,
+    COULD_NOT_FIND_SERVER = 6,
+    DONE = 7,
+}
+table WifiProvisioningStatusResponse {
+    status: WifiProvisioningStatus;
+}
+enum AutoBoneProcessType: uint8 {
+    NONE = 0,
+    RECORD = 1,
+    SAVE = 2,
+    PROCESS = 3,
+    APPLY = 4,
+}
+table AutoBoneProcessRequest {
+    process_type: AutoBoneProcessType;
+}
+table AutoBoneProcessStatusResponse {
+    process_type: AutoBoneProcessType;
+    message: string (deprecated);
+    current: uint32;
+    total: uint32;
+    completed: bool;
+    success: bool;
+    eta: float32;
+}
+table AutoBoneEpochResponse {
+    current_epoch: uint32;
+    total_epochs: uint32;
+    epoch_error: float32;
+    adjusted_skeleton_parts: [SkeletonPart];
+}
+table AutoBoneSettings {
+    cursor_increment: int32 = null;
+    min_data_distance: int32 = null;
+    max_data_distance: int32 = null;
+    num_epochs: int32 = null;
+    print_every_num_epochs: int32 = null;
+    initial_adjust_rate: float32 = null;
+    adjust_rate_decay: float32 = null;
+    slide_error_factor: float32 = null;
+    offset_slide_error_factor: float32 = null;
+    foot_height_offset_error_factor: float32 = null;
+    body_proportion_error_factor: float32 = null;
+    height_error_factor: float32 = null;
+    position_error_factor: float32 = null;
+    position_offset_error_factor: float32 = null;
+    calc_init_error: bool = null;
+    target_hmd_height: float32 = null;
+    target_full_height: float32 = null;
+    randomize_frame_order: bool = null;
+    scale_each_step: bool = null;
+    sample_count: int32 = null;
+    sample_rate_ms: int64 = null;
+    save_recordings: bool = null;
+    use_skeleton_height: bool = null;
+    rand_seed: int64 = null;
+}
+table HeightRequest {}
+table HeightResponse {
+    hmd_height: float32;
+    estimated_full_height: float32;
+}
+table AutoBoneApplyRequest {}
+table AutoBoneStopRecordingRequest {}
+table AutoBoneCancelRecordingRequest {}
+table OverlayDisplayModeRequest {}
+table OverlayDisplayModeChangeRequest {
+    is_visible: bool = null;
+    is_mirrored: bool = null;
+}
+table OverlayDisplayModeResponse {
+    is_visible: bool;
+    is_mirrored: bool;
+}
+table ServerInfosRequest {}
+table ServerInfosResponse {
+    localIp: string;
+}
+table LegTweaksTmpChange {
+    floor_clip: bool = null;
+    skating_correction: bool = null;
+    toe_snap: bool = null;
+    foot_plant: bool = null;
+}
+table LegTweaksTmpClear {
+    floor_clip: bool = false;
+    skating_correction: bool = false;
+    toe_snap: bool = false;
+    foot_plant: bool = false;
+}
+union StatusData {
+    StatusTrackerReset,
+    StatusTrackerError,
+    StatusSteamVRDisconnected,
+    StatusUnassignedHMD,
+}
+table StatusTrackerReset {
+    tracker_id: solarxr_protocol.datatypes.TrackerId;
+}
+table StatusTrackerError {
+    tracker_id: solarxr_protocol.datatypes.TrackerId;
+}
+table StatusSteamVRDisconnected {
+    bridge_settings_name: string;
+}
+table StatusUnassignedHMD {
+    tracker_id: solarxr_protocol.datatypes.TrackerId;
+}
+table StatusSystemRequest {}
+table StatusSystemResponse {
+    current_statuses: [StatusMessage];
+}
+table StatusSystemUpdate {
+    new_status: StatusMessage;
+}
+table StatusSystemFixed {
+    fixed_status_id: uint32;
+}
+table StatusMessage {
+    id: uint32;
+    prioritized: bool = false;
+    data: StatusData;
+}
+table SetPauseTrackingRequest {
+    pauseTracking: bool;
+}
+table ClearMountingResetRequest {}
+enum ComputerDirectory: uint8 {
+    Documents,
+}
+table SaveFileNotification {
+    data: [uint8];
+    mime_type: string;
+    file_extension: string;
+    expected_dir: ComputerDirectory = null;
+    expected_filename: string;
+}
+table TrackingPauseStateRequest {}
+table TrackingPauseStateResponse {
+    trackingPaused: bool;
+}
+table SerialTrackerGetWifiScanRequest {}
+table UnknownDeviceHandshakeNotification {
+    mac_address: string;
+}
+table AddUnknownDeviceRequest {
+    mac_address: string;
+}
+table ForgetDeviceRequest {
+    mac_address: string;
+}
+
+namespace solarxr_protocol.pub_sub;
+table TopicId {
+    organization: string;
+    app_name: string;
+    topic: string;
+}
+table TopicHandle {
+    id: uint16;
+}
+union Topic {
+    TopicHandle,
+    TopicId,
+}
+table TopicMapping {
+    id: TopicId;
+    handle: TopicHandle;
+}
+table TopicHandleRequest {
+    id: TopicId;
+}
+table SubscriptionRequest {
+    topic: Topic;
+}
+namespace solarxr_protocol.pub_sub;
+union PubSubUnion {
+    Message,
+    SubscriptionRequest,
+    TopicHandleRequest,
+    TopicMapping,
+}
+table PubSubHeader {
+    u: PubSubUnion;
+}
+union Payload {
+    solarxr_protocol.datatypes.StringTable,
+    solarxr_protocol.datatypes.Bytes,
+    KeyValues,
+}
+table Message {
+    topic: Topic;
+    payload: Payload;
+}
+table KeyValues {
+    keys: [string];
+    values: [string];
+}
+
+namespace solarxr_protocol;
+table MessageBundle {
+    data_feed_msgs: [solarxr_protocol.data_feed.DataFeedMessageHeader];
+    rpc_msgs: [solarxr_protocol.rpc.RpcMessageHeader];
+    pub_sub_msgs: [solarxr_protocol.pub_sub.PubSubHeader];
+}

@@ -494,6 +494,15 @@ if(XRT_BUILD_DRIVER_STEAMVR_LIGHTHOUSE)
 	list(APPEND ENABLED_HEADSET_DRIVERS steamvr_lh)
 endif()
 
+if(XRT_BUILD_DRIVER_SOLARXR)
+	add_library(
+		drv_solarxr STATIC solarxr/solarxr_device.c solarxr/solarxr_device.h
+				   solarxr/websocket.c solarxr/websocket.h
+		)
+	target_link_libraries(drv_solarxr PRIVATE xrt-interfaces aux_util solarxr_protocol)
+	list(APPEND ENABLED_DRIVERS solarxr)
+endif()
+
 if(XRT_BUILD_SAMPLES)
 	# We build the sample driver to make sure it stays valid,
 	# but it never gets linked into a final target.
