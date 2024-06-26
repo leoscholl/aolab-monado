@@ -136,7 +136,7 @@ android_run_thread(void *ptr)
 
 	int ret = 0;
 	while (d->oth.running && ret != ALOOPER_POLL_ERROR) {
-		ret = ALooper_pollAll(0, NULL, NULL, NULL);
+		ret = ALooper_pollAll(-1, NULL, NULL, NULL);
 	}
 
 	return NULL;
