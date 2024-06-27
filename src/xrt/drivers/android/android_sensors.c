@@ -105,9 +105,9 @@ android_run_thread(void *ptr)
 	d->accelerometer = ASensorManager_getDefaultSensor(d->sensor_manager, ASENSOR_TYPE_ACCELEROMETER);
 	d->gyroscope = ASensorManager_getDefaultSensor(d->sensor_manager, ASENSOR_TYPE_GYROSCOPE);
 
-	ALooper *looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
+	d->looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
 
-	d->event_queue = ASensorManager_createEventQueue(d->sensor_manager, looper, ALOOPER_POLL_CALLBACK,
+	d->event_queue = ASensorManager_createEventQueue(d->sensor_manager, d->looper, ALOOPER_POLL_CALLBACK,
 	                                                 android_sensor_callback, (void *)d);
 
 	/*
@@ -135,8 +135,8 @@ android_run_thread(void *ptr)
 	}
 
 	int ret = 0;
-	while (d->oth.running && ret != ALOOPER_POLL_ERROR) {
-		ret = ALooper_pollAll(-1, NULL, NULL, NULL);
+	while (d->oth.running && ret != ALOOPER_POLL_ERROR && ret != ALOOPER_POLL_WAKE) {
+		ret = ALooper_pollOnce(-1, NULL, NULL, NULL);
 	}
 
 	return NULL;
@@ -155,6 +155,9 @@ android_device_destroy(struct xrt_device *xdev)
 	struct android_device *android = android_device(xdev);
 
 	// Destroy the thread object.
+	if (android->looper) {
+		ALooper_wake(android->looper);
+	}
 	os_thread_helper_destroy(&android->oth);
 
 	// Now that the thread is not running we can destroy the lock.
@@ -225,6 +228,7 @@ android_device_create()
 	snprintf(d->base.serial, XRT_DEVICE_NAME_LEN, "Android Sensors");
 
 	d->log_level = debug_get_log_option_android_log();
+	d->looper = NULL;
 
 	m_imu_3dof_init(&d->fusion, M_IMU_3DOF_USE_GRAVITY_DUR_20MS);
 
