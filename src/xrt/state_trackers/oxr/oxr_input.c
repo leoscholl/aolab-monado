@@ -647,19 +647,21 @@ get_matching_binding_profile(struct oxr_interaction_profile *profile, struct xrt
 	return NULL;
 }
 
-static XrPath
-get_matched_xrpath(struct oxr_binding *b, const struct oxr_action_ref *act)
+
+// NOTE: This function expects out_matched_paths size is b->key_count
+// Returned int is the number of matched paths.
+static uint32_t
+get_matched_xrpaths(struct oxr_binding *b, const struct oxr_action_ref *act, XrPath *out_matched_paths)
 {
-	XrPath preferred_path = XR_NULL_PATH;
+	uint32_t matched_path_index = 0;
 	for (uint32_t i = 0; i < b->key_count; i++) {
 		if (b->keys[i] == act->act_key) {
 			uint32_t preferred_path_index = XR_NULL_PATH;
 			preferred_path_index = b->preferred_binding_path_index[i];
-			preferred_path = b->paths[preferred_path_index];
-			break;
+			out_matched_paths[matched_path_index++] = b->paths[preferred_path_index];
 		}
 	}
-	return preferred_path;
+	return matched_path_index;
 }
 
 static void
@@ -747,41 +749,57 @@ get_binding(struct oxr_logger *log,
 		const char *str = NULL;
 		struct oxr_binding *binding_point = binding_points[i];
 
-		XrPath matched_path = get_matched_xrpath(binding_point, act_ref);
+		// Could potentially allocate path_count+1, and then avoid duplicate results in max_matched_paths.
+		int max_matched_paths = binding_point->key_count;
+		XrPath *matched_paths = U_TYPED_ARRAY_CALLOC(XrPath, max_matched_paths);
 
-		oxr_path_get_string(log, sess->sys->inst, matched_path, &str, &length);
-		oxr_slog(slog, "\t\t\tBinding: %s\n", str);
-
-		if (binding_point->subaction_path != subaction_path) {
-			oxr_slog(slog, "\t\t\t\tRejected! (SUB PATH)\n");
-			continue;
+		// TODO: Decide if this is strictly necessary. Null path == 0, and the calloc inits to 0.
+		for (int j = 0; j < max_matched_paths; ++j) {
+			matched_paths[j] = XR_NULL_PATH;
 		}
 
-		bool found = do_io_bindings( //
-		    binding_point,           //
-		    act_ref,                 //
-		    xdev,                    //
-		    xbp,                     //
-		    matched_path,            //
-		    inputs,                  //
-		    input_count,             //
-		    outputs,                 //
-		    output_count);           //
-
-		if (found) {
-			if (xbp == NULL) {
-				oxr_slog(slog, "\t\t\t\tBound (xdev)!\n");
-			} else {
-				oxr_slog(slog, "\t\t\t\tBound (xbp)!\n");
+		uint32_t matched_count = get_matched_xrpaths(binding_point, act_ref, matched_paths);
+		for (int j = 0; j < matched_count; ++j) {
+			if (matched_paths[j] == XR_NULL_PATH) {
+				continue;
 			}
-			continue;
-		}
+			XrPath matched_path = matched_paths[j];
 
-		if (xbp == NULL) {
-			oxr_slog(slog, "\t\t\t\tRejected! (NO XDEV NAME)\n");
-		} else {
-			oxr_slog(slog, "\t\t\t\tRejected! (NO XBINDING)\n");
+			oxr_path_get_string(log, sess->sys->inst, matched_path, &str, &length);
+			oxr_slog(slog, "\t\t\tBinding: %s\n", str);
+
+			if (binding_point->subaction_path != subaction_path) {
+				oxr_slog(slog, "\t\t\t\tRejected! (SUB PATH)\n");
+				continue;
+			}
+
+			bool found = do_io_bindings( //
+			    binding_point,           //
+			    act_ref,                 //
+			    xdev,                    //
+			    xbp,                     //
+			    matched_path,            //
+			    inputs,                  //
+			    input_count,             //
+			    outputs,                 //
+			    output_count);           //
+
+			if (found) {
+				if (xbp == NULL) {
+					oxr_slog(slog, "\t\t\t\tBound (xdev)!\n");
+				} else {
+					oxr_slog(slog, "\t\t\t\tBound (xbp)!\n");
+				}
+				continue;
+			}
+
+			if (xbp == NULL) {
+				oxr_slog(slog, "\t\t\t\tRejected! (NO XDEV NAME)\n");
+			} else {
+				oxr_slog(slog, "\t\t\t\tRejected! (NO XBINDING)\n");
+			}
 		}
+		free(matched_paths);
 	}
 }
 
