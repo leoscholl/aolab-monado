@@ -371,7 +371,7 @@ check_tracker_pose(struct oh_device *ohd, enum xrt_input_name name)
 	return (ohd->ohmd_device_type == OPENHMD_GENERIC_TRACKER) && name == XRT_INPUT_GENERIC_TRACKER_POSE;
 }
 
-static void
+static xrt_result_t
 oh_device_get_tracked_pose(struct xrt_device *xdev,
                            enum xrt_input_name name,
                            int64_t at_timestamp_ns,
@@ -383,7 +383,7 @@ oh_device_get_tracked_pose(struct xrt_device *xdev,
 
 	if (!check_head_pose(ohd, name) && !check_controller_pose(ohd, name) && !check_tracker_pose(ohd, name)) {
 		OHMD_ERROR(ohd, "unknown input name: %d", name);
-		return;
+		return XRT_ERROR_INPUT_UNSUPPORTED;
 	}
 
 	ohmd_ctx_update(ohd->ctx);
@@ -427,7 +427,7 @@ oh_device_get_tracked_pose(struct xrt_device *xdev,
 		 */
 		*out_relation = ohd->last_relation;
 		OHMD_TRACE(ohd, "GET_TRACKED_POSE (%s) - no new data", ohd->base.str);
-		return;
+		return XRT_SUCCESS;
 	}
 
 	/*!
@@ -468,6 +468,8 @@ oh_device_get_tracked_pose(struct xrt_device *xdev,
 	// Update state within driver
 	ohd->last_update = (int64_t)now;
 	ohd->last_relation = *out_relation;
+
+	return XRT_SUCCESS;
 }
 
 

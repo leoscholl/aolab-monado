@@ -430,7 +430,7 @@ rokid_hmd_destroy(struct xrt_device *xdev)
 	u_device_free(&rokid->base);
 }
 
-static void
+static xrt_result_t
 rokid_hmd_get_tracked_pose(struct xrt_device *xdev,
                            enum xrt_input_name name,
                            int64_t at_timestamp_ns,
@@ -440,11 +440,13 @@ rokid_hmd_get_tracked_pose(struct xrt_device *xdev,
 
 	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
 		ROKID_ERROR(rokid, "unknown input name");
-		return;
+		return XRT_ERROR_INPUT_UNSUPPORTED;
 	}
 	os_mutex_lock(&rokid->fusion.mutex);
 	rokid_fusion_get_pose(&rokid->fusion, at_timestamp_ns, out_relation);
 	os_mutex_unlock(&rokid->fusion.mutex);
+
+	return XRT_SUCCESS;
 }
 
 static struct xrt_device *

@@ -367,7 +367,7 @@ ns_hmd_destroy(struct xrt_device *xdev)
 	u_device_free(&ns->base);
 }
 
-static void
+static xrt_result_t
 ns_hmd_get_tracked_pose(struct xrt_device *xdev,
                         enum xrt_input_name name,
                         int64_t at_timestamp_ns,
@@ -378,10 +378,11 @@ ns_hmd_get_tracked_pose(struct xrt_device *xdev,
 
 	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
 		NS_ERROR(ns, "unknown input name");
-		return;
+		return XRT_ERROR_INPUT_UNSUPPORTED;
 	}
 
 	*out_relation = ns->no_tracker_relation; // you can change this using the debug gui
+	return XRT_SUCCESS;
 }
 
 static void
