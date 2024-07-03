@@ -1933,9 +1933,7 @@ ipc_handle_device_get_tracked_pose(volatile struct ipc_client_state *ics,
 	}
 
 	// Get the pose.
-	xrt_device_get_tracked_pose(xdev, name, at_timestamp, out_relation);
-
-	return XRT_SUCCESS;
+	return xrt_device_get_tracked_pose(xdev, name, at_timestamp, out_relation);
 }
 
 xrt_result_t
