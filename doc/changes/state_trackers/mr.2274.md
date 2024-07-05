@@ -1,0 +1,1 @@
+Improve handling of input coercion with a trackpad (Containing X/Y subpaths)

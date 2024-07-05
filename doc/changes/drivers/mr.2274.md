@@ -1,0 +1,1 @@
+Adjust driver defaults to handle all but sample time for various flags
