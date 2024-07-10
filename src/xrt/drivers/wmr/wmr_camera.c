@@ -25,6 +25,10 @@
 #include "util/u_frame.h"
 #include "util/u_trace_marker.h"
 
+#ifdef XRT_OS_LINUX
+#include "util/u_linux.h"
+#endif
+
 #include "wmr_config.h"
 #include "wmr_protocol.h"
 #include "wmr_camera.h"
@@ -93,7 +97,6 @@ struct wmr_camera
 	bool running;
 
 	struct os_thread_helper usb_thread;
-	int usb_complete;
 
 	struct wmr_camera_config tcam_confs[WMR_MAX_CAMERAS]; //!< Configs for tracking cameras
 	int tcam_count;                                       //!< Number of tracking cameras
@@ -219,21 +222,29 @@ compute_frame_size(struct wmr_camera *cam)
 static void *
 wmr_cam_usb_thread(void *ptr)
 {
-	U_TRACE_SET_THREAD_NAME("WMR: USB-Camera");
+	U_TRACE_SET_THREAD_NAME("WMR USB Camera");
 
 	struct wmr_camera *cam = ptr;
+	os_thread_helper_name(&cam->usb_thread, "WMR: USB-Camera");
+
+#ifdef XRT_OS_LINUX
+	// Try to raise priority of this thread, so we don't miss packets under load
+	u_linux_try_to_set_realtime_priority_on_thread(U_LOGGING_INFO, "WMR: USB-Camera");
+#endif
 
 	os_thread_helper_lock(&cam->usb_thread);
-	while (os_thread_helper_is_running_locked(&cam->usb_thread) && !cam->usb_complete) {
+	while (os_thread_helper_is_running_locked(&cam->usb_thread)) {
 		os_thread_helper_unlock(&cam->usb_thread);
 
-		libusb_handle_events_completed(cam->ctx, &cam->usb_complete);
+		int res = libusb_handle_events_completed(cam->ctx, NULL);
+		if (res != LIBUSB_SUCCESS) {
+			WMR_CAM_ERROR(cam, "USB thread libusb error %s", libusb_strerror(res));
+			break;
+		}
 
 		os_thread_helper_lock(&cam->usb_thread);
 	}
 
-	//! @todo Think this is not needed? what condition are we waiting for?
-	os_thread_helper_wait_locked(&cam->usb_thread);
 	os_thread_helper_unlock(&cam->usb_thread);
 
 	return NULL;
@@ -420,7 +431,7 @@ wmr_camera_open(struct wmr_camera_open_config *config)
 	}
 
 	if (os_thread_helper_init(&cam->usb_thread) != 0) {
-		WMR_CAM_ERROR(cam, "Failed to initialise threading");
+		WMR_CAM_ERROR(cam, "Failed to initialise camera USB thread");
 		wmr_camera_free(cam);
 		return NULL;
 	}
@@ -438,12 +449,6 @@ wmr_camera_open(struct wmr_camera_open_config *config)
 
 	res = libusb_claim_interface(cam->dev, 3);
 	if (res < 0) {
-		goto fail;
-	}
-
-	cam->usb_complete = 0;
-	if (os_thread_helper_start(&cam->usb_thread, wmr_cam_usb_thread, cam) != 0) {
-		WMR_CAM_ERROR(cam, "Failed to start camera USB thread");
 		goto fail;
 	}
 
@@ -523,21 +528,17 @@ wmr_camera_free(struct wmr_camera *cam)
 {
 	DRV_TRACE_MARKER();
 
-	// Stop the camera.
 	wmr_camera_stop(cam);
+
+	os_thread_helper_destroy(&cam->usb_thread);
 
 	if (cam->ctx != NULL) {
 		int i;
-
-		os_thread_helper_lock(&cam->usb_thread);
-		cam->usb_complete = 1;
-		os_thread_helper_unlock(&cam->usb_thread);
 
 		if (cam->dev != NULL) {
 			libusb_close(cam->dev);
 		}
 
-		os_thread_helper_destroy(&cam->usb_thread);
 
 		for (i = 0; i < NUM_XFERS; i++) {
 			if (cam->xfers[i] == NULL) {
@@ -566,6 +567,11 @@ wmr_camera_start(struct wmr_camera *cam)
 	DRV_TRACE_MARKER();
 
 	int res = 0;
+
+	if (os_thread_helper_start(&cam->usb_thread, wmr_cam_usb_thread, cam) != 0) {
+		WMR_CAM_ERROR(cam, "Failed to start camera USB thread");
+		goto fail;
+	}
 
 	if (!compute_frame_size(cam)) {
 		WMR_CAM_WARN(cam, "Invalid config or no head tracking cameras found");
@@ -627,6 +633,8 @@ wmr_camera_stop(struct wmr_camera *cam)
 		return true;
 	}
 	cam->running = false;
+
+	os_thread_helper_stop_and_wait(&cam->usb_thread);
 
 	for (i = 0; i < NUM_XFERS; i++) {
 		if (cam->xfers[i] != NULL) {
