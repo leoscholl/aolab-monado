@@ -242,26 +242,12 @@ wmr_cam_usb_thread(void *ptr)
 static int
 send_buffer_to_device(struct wmr_camera *cam, uint8_t *buf, uint8_t len)
 {
-	struct libusb_transfer *xfer;
-	uint8_t *data;
-
-	xfer = libusb_alloc_transfer(0);
-	if (xfer == NULL) {
-		return LIBUSB_ERROR_NO_MEM;
+	int sent = 0;
+	int r = libusb_bulk_transfer(cam->dev, CAM_ENDPOINT | LIBUSB_ENDPOINT_OUT, buf, (int)len, &sent, 0);
+	if (sent != len) {
+		WMR_CAM_WARN(cam, "Transfer only sent %d out of %d", sent, (int)len);
 	}
-
-	data = malloc(len);
-	if (data == NULL) {
-		libusb_free_transfer(xfer);
-		return LIBUSB_ERROR_NO_MEM;
-	}
-
-	memcpy(data, buf, len);
-
-	libusb_fill_bulk_transfer(xfer, cam->dev, CAM_ENDPOINT | LIBUSB_ENDPOINT_OUT, data, len, NULL, NULL, 0);
-	xfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
-
-	return libusb_submit_transfer(xfer);
+	return r;
 }
 
 static int
