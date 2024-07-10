@@ -54,6 +54,8 @@ update_expgain(struct wmr_camera *cam, struct xrt_frame **frames);
 #define WMR_CAM_WARN(c, ...) U_LOG_IFL_W((c)->log_level, __VA_ARGS__)
 #define WMR_CAM_ERROR(c, ...) U_LOG_IFL_E((c)->log_level, __VA_ARGS__)
 
+#define WMR_CAMERA_USB_INTERFACE_NUM 3
+
 #define CAM_ENDPOINT 0x05
 
 #define NUM_XFERS 4
@@ -447,7 +449,13 @@ wmr_camera_open(struct wmr_camera_open_config *config)
 		goto fail;
 	}
 
-	res = libusb_claim_interface(cam->dev, 3);
+	res = libusb_set_auto_detach_kernel_driver(cam->dev, 1);
+	if (res < 0) {
+		WMR_CAM_ERROR(cam, "Failed to set autodetach on USB device");
+		goto fail;
+	}
+
+	res = libusb_claim_interface(cam->dev, WMR_CAMERA_USB_INTERFACE_NUM);
 	if (res < 0) {
 		goto fail;
 	}
@@ -533,14 +541,12 @@ wmr_camera_free(struct wmr_camera *cam)
 	os_thread_helper_destroy(&cam->usb_thread);
 
 	if (cam->ctx != NULL) {
-		int i;
-
 		if (cam->dev != NULL) {
+			libusb_release_interface(cam->dev, WMR_CAMERA_USB_INTERFACE_NUM);
 			libusb_close(cam->dev);
 		}
 
-
-		for (i = 0; i < NUM_XFERS; i++) {
+		for (size_t i = 0; i < NUM_XFERS; i++) {
 			if (cam->xfers[i] == NULL) {
 				continue;
 			}
