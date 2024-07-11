@@ -479,7 +479,6 @@ rokid_hmd_create(struct xrt_prober_device *prober_device)
 	rokid->base.hmd->blend_modes[idx++] = XRT_BLEND_MODE_OPAQUE;
 	rokid->base.hmd->blend_mode_count = idx;
 
-	rokid->base.update_inputs = u_device_noop_update_inputs;
 	rokid->base.get_tracked_pose = rokid_hmd_get_tracked_pose;
 	rokid->base.get_view_poses = u_device_get_view_poses;
 	rokid->base.destroy = rokid_hmd_destroy;

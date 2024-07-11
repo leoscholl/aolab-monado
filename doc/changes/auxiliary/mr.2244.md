@@ -1,0 +1,1 @@
+remove u_device_ni_get_visibility_mask

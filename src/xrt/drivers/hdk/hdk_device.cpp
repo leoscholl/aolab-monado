@@ -290,7 +290,6 @@ hdk_device_create(struct os_hid_device *dev, enum HDK_VARIANT variant)
 	hd->base.hmd->blend_modes[idx++] = XRT_BLEND_MODE_OPAQUE;
 	hd->base.hmd->blend_mode_count = idx;
 
-	hd->base.update_inputs = u_device_noop_update_inputs;
 	hd->base.get_tracked_pose = hdk_device_get_tracked_pose;
 	hd->base.get_view_poses = u_device_get_view_poses;
 	hd->base.destroy = hdk_device_destroy;

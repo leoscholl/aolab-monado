@@ -208,7 +208,6 @@ ht_device_create_common(struct t_stereo_camera_calibration *calib,
 	htd->base.tracking_origin->offset.position.z = 0.0f;
 	htd->base.tracking_origin->offset.orientation.w = 1.0f;
 
-	htd->base.update_inputs = u_device_noop_update_inputs;
 	htd->base.get_hand_tracking = ht_device_get_hand_tracking;
 	htd->base.destroy = ht_device_destroy;
 

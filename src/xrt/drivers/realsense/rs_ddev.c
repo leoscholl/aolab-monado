@@ -460,7 +460,6 @@ rs_ddev_create(int device_idx)
 
 	U_LOG_D("Realsense opts are %i %i %i %i %i\n", rs->enable_mapping, rs->enable_pose_jumping,
 	        rs->enable_relocalization, rs->enable_pose_prediction, rs->enable_pose_filtering);
-	rs->base.update_inputs = u_device_noop_update_inputs;
 	rs->base.get_tracked_pose = rs_ddev_get_tracked_pose;
 	rs->base.get_view_poses = rs_ddev_get_view_poses;
 	rs->base.destroy = rs_ddev_destroy;

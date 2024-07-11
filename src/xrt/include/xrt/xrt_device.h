@@ -279,6 +279,8 @@ struct xrt_device
 	/*!
 	 * Update any attached inputs.
 	 *
+	 * Optional function, no-op if not set by the implementation.
+	 *
 	 * @param[in] xdev        The device.
 	 */
 	void (*update_inputs)(struct xrt_device *xdev);
@@ -520,7 +522,9 @@ struct xrt_device
 static inline void
 xrt_device_update_inputs(struct xrt_device *xdev)
 {
-	xdev->update_inputs(xdev);
+	if (xdev->update_inputs != NULL) {
+		xdev->update_inputs(xdev);
+	}
 }
 
 /*!
@@ -584,7 +588,7 @@ xrt_device_get_body_skeleton(struct xrt_device *xdev,
                              struct xrt_body_skeleton *out_value)
 {
 	if (xdev->get_body_skeleton == NULL) {
-		return XRT_ERROR_DEVICE_FUNCTION_NOT_IMPLEMENTED;
+		return XRT_ERROR_NOT_IMPLEMENTED;
 	}
 	return xdev->get_body_skeleton(xdev, body_tracking_type, out_value);
 }
@@ -603,7 +607,7 @@ xrt_device_get_body_joints(struct xrt_device *xdev,
                            struct xrt_body_joint_set *out_value)
 {
 	if (xdev->get_body_joints == NULL) {
-		return XRT_ERROR_DEVICE_FUNCTION_NOT_IMPLEMENTED;
+		return XRT_ERROR_NOT_IMPLEMENTED;
 	}
 	return xdev->get_body_joints(xdev, body_tracking_type, desired_timestamp_ns, out_value);
 }
@@ -667,9 +671,8 @@ xrt_device_get_visibility_mask(struct xrt_device *xdev,
                                uint32_t view_index,
                                struct xrt_visibility_mask **out_mask)
 {
-
 	if (xdev->get_visibility_mask == NULL) {
-		return XRT_ERROR_DEVICE_FUNCTION_NOT_IMPLEMENTED;
+		return XRT_ERROR_NOT_IMPLEMENTED;
 	}
 	return xdev->get_visibility_mask(xdev, type, view_index, out_mask);
 }

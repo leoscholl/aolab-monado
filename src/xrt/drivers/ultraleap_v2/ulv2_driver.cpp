@@ -391,7 +391,6 @@ ulv2_create_device(struct xrt_device **out_xdev)
 
 	ulv2d->log_level = debug_get_log_option_ulv2_log();
 
-	ulv2d->base.update_inputs = u_device_noop_update_inputs;
 	ulv2d->base.get_hand_tracking = ulv2_device_get_hand_tracking;
 	ulv2d->base.destroy = ulv2_device_destroy;
 

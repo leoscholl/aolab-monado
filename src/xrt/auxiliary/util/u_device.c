@@ -468,19 +468,6 @@ u_device_get_view_poses(struct xrt_device *xdev,
 
 /*
  *
- * No-op implementation of functions.
- *
- */
-
-void
-u_device_noop_update_inputs(struct xrt_device *xdev)
-{
-	// Empty, should only be used from a device without any inputs.
-}
-
-
-/*
- *
  * Not implemented function helpers.
  *
  */
@@ -521,16 +508,6 @@ u_device_ni_compute_distortion(
 {
 	E(compute_distortion);
 	return false;
-}
-
-xrt_result_t
-u_device_ni_get_visibility_mask(struct xrt_device *xdev,
-                                enum xrt_visibility_mask_type type,
-                                uint32_t view_index,
-                                struct xrt_visibility_mask **out_mask)
-{
-	E(get_visibility_mask);
-	return XRT_ERROR_DEVICE_FUNCTION_NOT_IMPLEMENTED;
 }
 
 bool

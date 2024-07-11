@@ -468,9 +468,7 @@ ns_hmd_create(const cJSON *config_json)
 	ns->base.hmd->distortion.fov[0] = ns->config.fov[0];
 	ns->base.hmd->distortion.fov[1] = ns->config.fov[1];
 
-
 	ns->base.compute_distortion = ns_mesh_calc;
-	ns->base.update_inputs = u_device_noop_update_inputs;
 	ns->base.get_tracked_pose = ns_hmd_get_tracked_pose;
 	ns->base.get_view_poses = ns_hmd_get_view_poses;
 	ns->base.destroy = ns_hmd_destroy;

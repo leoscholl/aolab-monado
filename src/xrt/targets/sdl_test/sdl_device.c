@@ -88,7 +88,6 @@ sdl_device_init(struct sdl_program *sp)
 	xdev->inputs[0].active = true;
 
 	// Function pointers.
-	xdev->update_inputs = u_device_noop_update_inputs;
 	xdev->get_tracked_pose = sdl_hmd_get_tracked_pose;
 	xdev->get_view_poses = u_device_get_view_poses;
 	xdev->destroy = sdl_hmd_destroy;

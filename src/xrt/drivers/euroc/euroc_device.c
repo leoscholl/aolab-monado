@@ -205,7 +205,6 @@ euroc_device_create(struct xrt_prober *xp)
 		xd->inputs[0].name = XRT_INPUT_SIMPLE_GRIP_POSE;
 	}
 
-	xd->update_inputs = u_device_noop_update_inputs;
 	xd->get_tracked_pose = euroc_device_get_tracked_pose;
 	xd->destroy = euroc_device_destroy;
 	if (is_hmd) {

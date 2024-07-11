@@ -191,7 +191,6 @@ simulated_hmd_create(enum simulated_movement movement, const struct xrt_pose *ce
 	enum u_device_alloc_flags flags =
 	    (enum u_device_alloc_flags)(U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE);
 	struct simulated_hmd *hmd = U_DEVICE_ALLOCATE(struct simulated_hmd, flags, 1, 0);
-	hmd->base.update_inputs = u_device_noop_update_inputs;
 	hmd->base.get_tracked_pose = simulated_hmd_get_tracked_pose;
 	hmd->base.get_view_poses = u_device_get_view_poses;
 	hmd->base.ref_space_usage = simulated_ref_space_usage;
