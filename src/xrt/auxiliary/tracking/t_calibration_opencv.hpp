@@ -116,9 +116,10 @@ struct StereoCameraCalibrationWrapper
 		assert(isDataStorageValid());
 	}
 
-	StereoCameraCalibrationWrapper(enum t_camera_distortion_model distortion_model)
+	StereoCameraCalibrationWrapper(enum t_camera_distortion_model distortion_model, bool mono = false)
 	    : StereoCameraCalibrationWrapper(allocData(distortion_model))
 	{
+		base->mono = mono;
 
 		// The function allocData returns with a ref count of one,
 		// the constructor increments the refcount with one,

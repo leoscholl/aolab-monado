@@ -128,6 +128,14 @@ StereoRectificationMaps::StereoRectificationMaps(t_stereo_camera_calibration *da
 	cv::Size image_size(data->view[0].image_size_pixels.w, data->view[0].image_size_pixels.h);
 	StereoCameraCalibrationWrapper wrapped(data);
 
+	if (data->mono) {
+		view[0].rectify = calibration_get_undistort_map(data->view[0]);
+		view[1].rectify = view[0].rectify;
+
+		disparity_to_depth_mat = cv::Mat::eye(4, 4, CV_64F);
+		return;
+	}
+
 	/*
 	 * Generate our rectification maps
 	 *
@@ -471,6 +479,7 @@ t_stereo_camera_calibration_from_json_v2(cJSON *cjson, struct t_stereo_camera_ca
 	if (json["metadata"]["version"].isInvalid()) {
 		CALIB_WARN("'metadata.version' not found, will assume version=%d", supported_version);
 	}
+	bool mono = json["mono"].asBool();
 	CALIB_ASSERTR(version == supported_version, "Calibration json version (%d) != %d", version, supported_version);
 
 	// Temporary camera calibration structs so we can infer the distortion model easily
@@ -479,7 +488,11 @@ t_stereo_camera_calibration_from_json_v2(cJSON *cjson, struct t_stereo_camera_ca
 	// Load cameras
 	vector<JSONNode> cameras = json["cameras"].asArray();
 	bool okmats = true;
-	CALIB_ASSERTR(cameras.size() == 2, "Two cameras must be specified, %zu given", cameras.size());
+
+	size_t camera_len = mono ? 1 : 2;
+	CALIB_ASSERTR(cameras.size() == camera_len, "%lu camera(s) must be specified, %zu given", camera_len,
+	              cameras.size());
+
 	for (size_t i = 0; i < cameras.size(); i++) {
 		JSONNode jc = cameras[i];
 		bool loaded = t_camera_calibration_load_v2(jc.getCJSON(), &tmp_calibs[i]);
@@ -492,21 +505,24 @@ t_stereo_camera_calibration_from_json_v2(cJSON *cjson, struct t_stereo_camera_ca
 	//! don't have any cameras like that and the way t_stereo_camera_calib_alloc and
 	//!(Stereo)CameraCalibrationWrapper work makes it pretty annoying.
 
-	CALIB_ASSERT_(tmp_calibs[0].distortion_model == tmp_calibs[1].distortion_model);
+	StereoCameraCalibrationWrapper stereo{model, mono};
 
-	StereoCameraCalibrationWrapper stereo{model};
+	if (mono) {
+		stereo.view[0].base = tmp_calibs[0];
+		stereo.view[1].base = tmp_calibs[0];
+	} else {
+		CALIB_ASSERT_(tmp_calibs[0].distortion_model == tmp_calibs[1].distortion_model);
+		stereo.view[0].base = tmp_calibs[0];
+		stereo.view[1].base = tmp_calibs[1];
 
-	stereo.view[0].base = tmp_calibs[0];
-	stereo.view[1].base = tmp_calibs[1];
+		JSONNode rel = json["opencv_stereo_calibrate"];
+		okmats &= load_mat_field(rel["rotation"], 3, 3, stereo.camera_rotation_mat);
+		okmats &= load_mat_field(rel["translation"], 3, 1, stereo.camera_translation_mat);
+		okmats &= load_mat_field(rel["essential"], 3, 3, stereo.camera_essential_mat);
+		okmats &= load_mat_field(rel["fundamental"], 3, 3, stereo.camera_fundamental_mat);
 
-
-	JSONNode rel = json["opencv_stereo_calibrate"];
-	okmats &= load_mat_field(rel["rotation"], 3, 3, stereo.camera_rotation_mat);
-	okmats &= load_mat_field(rel["translation"], 3, 1, stereo.camera_translation_mat);
-	okmats &= load_mat_field(rel["essential"], 3, 3, stereo.camera_essential_mat);
-	okmats &= load_mat_field(rel["fundamental"], 3, 3, stereo.camera_fundamental_mat);
-
-	CALIB_ASSERTR(okmats, "One or more calibration matrices couldn't be loaded");
+		CALIB_ASSERTR(okmats, "One or more calibration matrices couldn't be loaded");
+	}
 	CALIB_ASSERT_(stereo.isDataStorageValid());
 
 	t_stereo_camera_calibration_reference(out_stereo, stereo.base);
@@ -649,12 +665,15 @@ t_stereo_camera_calibration_to_json_v2(cJSON **out_cjson, struct t_stereo_camera
 	jb << "{";
 	jb << "version" << 2;
 	jb << "}";
+	jb << "mono" << data->mono;
+
+	size_t camera_len = data->mono ? 1 : 2;
 
 	jb << "cameras";
 	jb << "[";
 
 	// Cameras
-	for (size_t i = 0; i < 2; i++) {
+	for (size_t i = 0; i < camera_len; i++) {
 		std::string model;
 		std::vector<std::string> names;
 		const auto &view = wrapped.view[i];
@@ -711,13 +730,15 @@ t_stereo_camera_calibration_to_json_v2(cJSON **out_cjson, struct t_stereo_camera
 	jb << "]";
 
 	// cv::stereoCalibrate data
-	jb << "opencv_stereo_calibrate"
-	   << "{";
-	jb << "rotation" << wrapped.camera_rotation_mat;
-	jb << "translation" << wrapped.camera_translation_mat;
-	jb << "essential" << wrapped.camera_essential_mat;
-	jb << "fundamental" << wrapped.camera_fundamental_mat;
-	jb << "}";
+	if (!data->mono) {
+		jb << "opencv_stereo_calibrate"
+		   << "{";
+		jb << "rotation" << wrapped.camera_rotation_mat;
+		jb << "translation" << wrapped.camera_translation_mat;
+		jb << "essential" << wrapped.camera_essential_mat;
+		jb << "fundamental" << wrapped.camera_fundamental_mat;
+		jb << "}";
+	}
 
 	jb << "}";
 
