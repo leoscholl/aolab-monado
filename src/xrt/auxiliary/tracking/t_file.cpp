@@ -60,6 +60,16 @@ read_cv_mat(FILE *f, cv::Mat *m, const char *name);
 static bool
 write_cv_mat(FILE *f, cv::Mat *m);
 
+//!@todo merge these with t_tracking.h
+#define PINHOLE_RADTAN5 "pinhole_radtan5"
+#define PINHOLE_RADTAN14 "pinhole_radtan14"
+#define FISHEYE_EQUIDISTANT4 "fisheye_equidistant4"
+
+static const std::map<std::string, enum t_camera_distortion_model> model_map {
+	{PINHOLE_RADTAN5, T_DISTORTION_OPENCV_RADTAN_5},
+	{PINHOLE_RADTAN14, T_DISTORTION_OPENCV_RADTAN_14},
+	{FISHEYE_EQUIDISTANT4, T_DISTORTION_FISHEYE_KB4},
+};
 
 /*
  *
@@ -78,12 +88,13 @@ calibration_get_undistort_map(t_camera_calibration &calib,
 		new_camera_matrix_optional = wrap.intrinsics_mat;
 	}
 
+	bool fisheye = (wrap.distortion_model == T_DISTORTION_FISHEYE_KB4);
+
 	//! @todo Scale Our intrinsics if the frame size we request
 	//              calibration for does not match what was saved
 	cv::Size image_size(calib.image_size_pixels.w, calib.image_size_pixels.h);
 
-	switch (calib.distortion_model) {
-	case (T_DISTORTION_FISHEYE_KB4):
+	if (fisheye) {
 		cv::fisheye::initUndistortRectifyMap(wrap.intrinsics_mat,        // cameraMatrix
 		                                     wrap.distortion_mat,        // distCoeffs
 		                                     rectify_transform_optional, // R
@@ -92,8 +103,7 @@ calibration_get_undistort_map(t_camera_calibration &calib,
 		                                     CV_32FC1,                   // m1type
 		                                     ret.remap_x,                // map1
 		                                     ret.remap_y);               // map2
-		break;
-	case T_DISTORTION_OPENCV_RADTAN_5:
+	} else {
 		cv::initUndistortRectifyMap(wrap.intrinsics_mat,        // cameraMatrix
 		                            wrap.distortion_mat,        // distCoeffs
 		                            rectify_transform_optional, // R
@@ -102,8 +112,6 @@ calibration_get_undistort_map(t_camera_calibration &calib,
 		                            CV_32FC1,                   // m1type
 		                            ret.remap_x,                // map1
 		                            ret.remap_y);               // map2
-		break;
-	default: assert(false);
 	}
 
 	return ret;
@@ -345,10 +353,6 @@ t_stereo_camera_calibration_load_path_v1(const char *calib_path, struct t_stereo
 	return success;
 }
 
-//!@todo merge these with t_tracking.h
-#define PINHOLE_RADTAN5 "pinhole_radtan5"
-#define FISHEYE_EQUIDISTANT4 "fisheye_equidistant4"
-
 //! Fills @p out_mat from a json array stored in @p jn. Returns true if @p jn is
 //! a valid @p rows * @p cols matrix, false otherwise.
 static bool
@@ -405,8 +409,33 @@ t_camera_calibration_load_v2(cJSON *cjson_cam, t_camera_calibration *cc)
 	cc->intrinsics[2][2] = 1;
 
 	size_t n = jc["distortion"].asObject().size();
-	if (model == PINHOLE_RADTAN5) {
-		cc->distortion_model = T_DISTORTION_OPENCV_RADTAN_5;
+
+	CALIB_ASSERTR(model_map.count(model) > 0, "Unknown camera model: '%s'", model.c_str());
+	cc->distortion_model = model_map.at(model);
+
+	switch (cc->distortion_model) {
+	case T_DISTORTION_OPENCV_RADTAN_14:
+		CALIB_ASSERTR(n == 14, "%zu != 14 distortion params", n);
+
+		cc->rt14.k1 = jc["distortion"]["k1"].asDouble();
+		cc->rt14.k2 = jc["distortion"]["k2"].asDouble();
+		cc->rt14.p1 = jc["distortion"]["p1"].asDouble();
+		cc->rt14.p2 = jc["distortion"]["p2"].asDouble();
+		cc->rt14.k3 = jc["distortion"]["k3"].asDouble();
+
+		cc->rt14.k4 = jc["distortion"]["k4"].asDouble();
+		cc->rt14.k5 = jc["distortion"]["k5"].asDouble();
+		cc->rt14.k6 = jc["distortion"]["k6"].asDouble();
+
+		cc->rt14.s1 = jc["distortion"]["s1"].asDouble();
+		cc->rt14.s2 = jc["distortion"]["s2"].asDouble();
+		cc->rt14.s3 = jc["distortion"]["s3"].asDouble();
+		cc->rt14.s4 = jc["distortion"]["s4"].asDouble();
+
+		cc->rt14.tx = jc["distortion"]["tx"].asDouble();
+		cc->rt14.ty = jc["distortion"]["ty"].asDouble();
+		break;
+	case T_DISTORTION_OPENCV_RADTAN_5:
 		CALIB_ASSERTR(n == 5, "%zu != 5 distortion params", n);
 
 		cc->rt5.k1 = jc["distortion"]["k1"].asDouble();
@@ -414,17 +443,16 @@ t_camera_calibration_load_v2(cJSON *cjson_cam, t_camera_calibration *cc)
 		cc->rt5.p1 = jc["distortion"]["p1"].asDouble();
 		cc->rt5.p2 = jc["distortion"]["p2"].asDouble();
 		cc->rt5.k3 = jc["distortion"]["k3"].asDouble();
-	} else if (model == FISHEYE_EQUIDISTANT4) {
-		cc->distortion_model = T_DISTORTION_FISHEYE_KB4;
+		break;
+	case T_DISTORTION_FISHEYE_KB4:
 		CALIB_ASSERTR(n == 4, "%zu != 4 distortion params", n);
 
 		cc->kb4.k1 = jc["distortion"]["k1"].asDouble();
 		cc->kb4.k2 = jc["distortion"]["k2"].asDouble();
 		cc->kb4.k3 = jc["distortion"]["k3"].asDouble();
 		cc->kb4.k4 = jc["distortion"]["k4"].asDouble();
-	} else {
-		CALIB_ASSERTR(false, "Invalid camera model: '%s'", model.c_str());
-		return false;
+		break;
+	default: CALIB_ASSERTR(0, "BUG: Unhandled distortion model %d", cc->distortion_model); break;
 	}
 
 	cc->image_size_pixels.w = jc["resolution"]["width"].asInt();
@@ -611,11 +639,6 @@ t_stereo_camera_calibration_to_json_v2(cJSON **out_cjson, struct t_stereo_camera
 		              "Can't deal with a stereo camera calibration with different distortion models per-view!");
 	}
 
-	if (data->view[0].distortion_model != T_DISTORTION_FISHEYE_KB4 &&
-	    data->view[0].distortion_model != T_DISTORTION_OPENCV_RADTAN_5) {
-		CALIB_ASSERTR(false, "Can only deal with fisheye or radtan5 distortion models!");
-	}
-
 	StereoCameraCalibrationWrapper wrapped(data);
 	JSONBuilder jb{};
 
@@ -632,10 +655,33 @@ t_stereo_camera_calibration_to_json_v2(cJSON **out_cjson, struct t_stereo_camera
 
 	// Cameras
 	for (size_t i = 0; i < 2; i++) {
+		std::string model;
+		std::vector<std::string> names;
 		const auto &view = wrapped.view[i];
-		bool fisheye = view.distortion_model == T_DISTORTION_FISHEYE_KB4;
+
+		switch (view.distortion_model) {
+			case T_DISTORTION_OPENCV_RADTAN_5:
+				model = PINHOLE_RADTAN5;
+				names = { "k1", "k2", "p1", "p2", "k3" };
+			break;
+			case T_DISTORTION_OPENCV_RADTAN_14:
+				model = PINHOLE_RADTAN14;
+				names = { "k1", "k2", "p1", "p2", "k3", "k4", "k5", "k6", "s1", "s2", "s3", "s4", "tx", "ty" };
+			break;
+			case T_DISTORTION_FISHEYE_KB4:
+				model = FISHEYE_EQUIDISTANT4;
+				names = { "k1", "k2", "k3", "k4" };
+			break;
+			default:
+			CALIB_ASSERTR(0, "BUG: Unhandled distortion model %d", view.distortion_model);
+			break;
+		}
+
+		int n = view.distortion_mat.size().area(); // Number of distortion parameters
+		CALIB_ASSERT_(n == (int) names.size());
+
 		jb << "{";
-		jb << "model" << (fisheye ? FISHEYE_EQUIDISTANT4 : PINHOLE_RADTAN5);
+		jb << "model" << model;
 
 		jb << "intrinsics";
 		jb << "{";
@@ -647,22 +693,9 @@ t_stereo_camera_calibration_to_json_v2(cJSON **out_cjson, struct t_stereo_camera
 
 		jb << "distortion";
 		jb << "{";
-		if (fisheye) {
-			int n = view.distortion_mat.size().area(); // Number of distortion parameters
-			CALIB_ASSERT_(n == 4);
 
-			constexpr array names{"k1", "k2", "k3", "k4"};
-			for (int i = 0; i < n; i++) {
-				jb << names[i] << view.distortion_mat(i);
-			}
-		} else {
-			int n = view.distortion_mat.size().area(); // Number of distortion parameters
-			CALIB_ASSERT_(n == 5);
-
-			constexpr array names{"k1", "k2", "p1", "p2", "k3"};
-			for (int i = 0; i < n; i++) {
-				jb << names[i] << view.distortion_mat(i);
-			}
+		for (int i = 0; i < n; i++) {
+			jb << names[i] << view.distortion_mat(i);
 		}
 		jb << "}";
 

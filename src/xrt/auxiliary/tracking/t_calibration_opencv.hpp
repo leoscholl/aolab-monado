@@ -71,7 +71,6 @@ struct CameraCalibrationWrapper
 	{
 		return intrinsics_mat.size() == cv::Size(3, 3) &&
 		       (double *)intrinsics_mat.data == &(base.intrinsics[0][0]) &&
-		       (base.distortion_model != T_DISTORTION_FISHEYE_KB4 || distortion_mat.size() == cv::Size(1, 4)) &&
 		       distortion_mat.size() ==
 		           cv::Size(1, t_num_opencv_params_from_distortion_model(base.distortion_model)) &&
 		       (double *)distortion_mat.data == &(base.distortion_parameters_as_array[0]);
