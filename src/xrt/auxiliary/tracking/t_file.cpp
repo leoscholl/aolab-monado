@@ -679,25 +679,23 @@ t_stereo_camera_calibration_to_json_v2(cJSON **out_cjson, struct t_stereo_camera
 		const auto &view = wrapped.view[i];
 
 		switch (view.distortion_model) {
-			case T_DISTORTION_OPENCV_RADTAN_5:
-				model = PINHOLE_RADTAN5;
-				names = { "k1", "k2", "p1", "p2", "k3" };
+		case T_DISTORTION_OPENCV_RADTAN_5:
+			model = PINHOLE_RADTAN5;
+			names = {"k1", "k2", "p1", "p2", "k3"};
 			break;
-			case T_DISTORTION_OPENCV_RADTAN_14:
-				model = PINHOLE_RADTAN14;
-				names = { "k1", "k2", "p1", "p2", "k3", "k4", "k5", "k6", "s1", "s2", "s3", "s4", "tx", "ty" };
+		case T_DISTORTION_OPENCV_RADTAN_14:
+			model = PINHOLE_RADTAN14;
+			names = {"k1", "k2", "p1", "p2", "k3", "k4", "k5", "k6", "s1", "s2", "s3", "s4", "tx", "ty"};
 			break;
-			case T_DISTORTION_FISHEYE_KB4:
-				model = FISHEYE_EQUIDISTANT4;
-				names = { "k1", "k2", "k3", "k4" };
+		case T_DISTORTION_FISHEYE_KB4:
+			model = FISHEYE_EQUIDISTANT4;
+			names = {"k1", "k2", "k3", "k4"};
 			break;
-			default:
-			CALIB_ASSERTR(0, "BUG: Unhandled distortion model %d", view.distortion_model);
-			break;
+		default: CALIB_ASSERTR(0, "BUG: Unhandled distortion model %d", view.distortion_model); break;
 		}
 
 		int n = view.distortion_mat.size().area(); // Number of distortion parameters
-		CALIB_ASSERT_(n == (int) names.size());
+		CALIB_ASSERT_(n == (int)names.size());
 
 		jb << "{";
 		jb << "model" << model;
