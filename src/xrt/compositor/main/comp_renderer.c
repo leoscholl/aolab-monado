@@ -1038,6 +1038,9 @@ dispatch_compute(struct comp_renderer *r,
 		// Scratch image covers the whole image.
 		struct xrt_normalized_rect layer_norm_rect = {.x = 0.0f, .y = 0.0f, .w = 1.0f, .h = 1.0f};
 
+		data.cs.scratch_size[i].x = c->scratch.views[i].info.width;
+		data.cs.scratch_size[i].y = c->scratch.views[i].info.height;
+
 		comp_render_cs_add_view(  //
 		    &data,                // data
 		    &world_poses[i],      // world_pose

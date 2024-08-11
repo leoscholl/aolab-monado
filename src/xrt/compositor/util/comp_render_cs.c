@@ -350,6 +350,7 @@ do_cs_distortion_from_scratch(struct render_compute *crc, const struct comp_rend
 	VkImageView src_image_views[XRT_MAX_VIEWS];
 	VkSampler src_samplers[XRT_MAX_VIEWS];
 	struct xrt_normalized_rect src_norm_rects[XRT_MAX_VIEWS];
+	struct xrt_vec2 src_sizes[XRT_MAX_VIEWS];
 
 	for (uint32_t i = 0; i < d->view_count; i++) {
 		// Data to be filled in.
@@ -367,6 +368,7 @@ do_cs_distortion_from_scratch(struct render_compute *crc, const struct comp_rend
 		src_image_views[i] = src_image_view;
 		src_samplers[i] = clamp_to_border_black;
 		src_norm_rects[i] = src_norm_rect;
+		src_sizes[i] = d->cs.scratch_size[i];
 	}
 
 	render_compute_projection(   //
@@ -374,6 +376,7 @@ do_cs_distortion_from_scratch(struct render_compute *crc, const struct comp_rend
 	    src_samplers,            // src_samplers
 	    src_image_views,         // src_image_views
 	    src_norm_rects,          // src_rects
+	    src_sizes,               // src_sizes
 	    d->cs.target_image,      // target_image
 	    d->cs.target_unorm_view, // target_image_view
 	    target_viewport_datas);  // views
@@ -402,6 +405,7 @@ do_cs_distortion_for_layer(struct render_compute *crc,
 	struct xrt_normalized_rect src_norm_rects[XRT_MAX_VIEWS];
 	struct xrt_pose src_poses[XRT_MAX_VIEWS];
 	struct xrt_fov src_fovs[XRT_MAX_VIEWS];
+	struct xrt_vec2 src_sizes[XRT_MAX_VIEWS];
 	VkSampler src_samplers[XRT_MAX_VIEWS];
 	VkImageView src_image_views[XRT_MAX_VIEWS];
 
@@ -435,6 +439,8 @@ do_cs_distortion_for_layer(struct render_compute *crc,
 		src_norm_rects[i] = src_norm_rect;
 		src_poses[i] = src_pose;
 		src_fovs[i] = src_fov;
+		src_sizes[i].x = layer->sc_array[i]->vkic.info.width;
+		src_sizes[i].y = layer->sc_array[i]->vkic.info.height;
 		src_samplers[i] = clamp_to_border_black;
 		src_image_views[i] = src_image_view;
 	}
@@ -445,6 +451,7 @@ do_cs_distortion_for_layer(struct render_compute *crc,
 		    src_samplers,            //
 		    src_image_views,         //
 		    src_norm_rects,          //
+		    src_sizes,               //
 		    d->cs.target_image,      //
 		    d->cs.target_unorm_view, //
 		    target_viewport_datas);  //
@@ -454,6 +461,7 @@ do_cs_distortion_for_layer(struct render_compute *crc,
 		    src_samplers,                   //
 		    src_image_views,                //
 		    src_norm_rects,                 //
+		    src_sizes,                      //
 		    src_poses,                      //
 		    src_fovs,                       //
 		    world_poses,                    //

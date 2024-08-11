@@ -25,14 +25,12 @@ layout(set = 0, binding = 3, std140) uniform restrict Config
 	vec4 pre_transform[2];
 	vec4 post_transform[2];
 	mat4 transform[2];
+	vec2 src_sizes[2];
 } ubo;
 
 
-vec2 position_to_uv(ivec2 extent, uint ix, uint iy)
+vec2 position_to_uv(ivec2 extent, vec2 xy)
 {
-	// Turn the index into floating point.
-	vec2 xy = vec2(float(ix), float(iy));
-
 	// The inverse of the extent of the target image is the pixel size in [0 .. 1] space.
 	vec2 extent_pixel_size = vec2(1.0 / float(extent.x), 1.0 / float(extent.y));
 
@@ -102,6 +100,17 @@ vec2 transform_uv(vec2 uv, uint iz)
 	}
 }
 
+vec2 distorted_uv(ivec2 extent, vec2 xy, uint iz)
+{
+	vec2 dist_uv = position_to_uv(extent, xy);
+
+	// Only read red channel, we don't do color aberration
+	vec2 r_uv = texture(distortion[iz + 0], dist_uv).xy;
+
+	// Do any transformation needed.
+	return transform_uv(r_uv, iz);
+}
+
 void main()
 {
 	uint ix = gl_GlobalInvocationID.x;
@@ -110,29 +119,71 @@ void main()
 
 	ivec2 offset = ivec2(ubo.views[iz].xy);
 	ivec2 extent = ivec2(ubo.views[iz].zw);
+	ivec2 src_extent = ivec2(ubo.src_sizes[iz]);
 
 	if (ix >= extent.x || iy >= extent.y) {
 		return;
 	}
 
-	vec2 dist_uv = position_to_uv(extent, ix, iy);
+	// extent of the area to sample in normalized coordinates
+	vec2 u0 = distorted_uv(extent, max(vec2(0, 0), vec2(ix - 0.5, iy - 0.5)), iz);
+	vec2 u1 = distorted_uv(extent, min(extent, vec2(ix + 0.5, iy + 0.5)), iz);
 
-	vec2 r_uv = texture(distortion[iz + 0], dist_uv).xy;
-	vec2 g_uv = texture(distortion[iz + 2], dist_uv).xy;
-	vec2 b_uv = texture(distortion[iz + 4], dist_uv).xy;
+	if (u0.y > u1.y)
+	{
+		float tmp = u0.y;
+		u0.y = u1.y;
+		u1.y = tmp;
+	}
 
-	// Do any transformation needed.
-	r_uv = transform_uv(r_uv, iz);
-	g_uv = transform_uv(g_uv, iz);
-	b_uv = transform_uv(b_uv, iz);
+	// extent in pixel coordinates
+	vec2 p0 = u0 * (src_extent - 1);
+	vec2 p1 = u1 * (src_extent - 1);
 
-	// Sample the source with distorted and chromatic-aberration corrected samples.
-	vec4 colour = vec4(
-		texture(source[iz], r_uv).r,
-		texture(source[iz], g_uv).g,
-		texture(source[iz], b_uv).b,
-		1);
+	// shrink by 1/2 pixel to prevent overlap
+	p0 += vec2(0.5);
+	p1 -= vec2(0.5);
 
+	// iteration area
+	vec2 i0, i1;
+	// If there is less than one pixel, just sample it
+	if (p1.x - p0.x <= 1)
+		i0.x = i1.x = distorted_uv(extent, vec2(ix, iy), iz).x * src_extent.x;
+	else
+	{
+		i0.x = floor(p0.x);
+		i1.x = ceil(p1.x);
+	}
+	if (p1.y - p0.y <= 1)
+		i0.y = i1.y = distorted_uv(extent, vec2(ix, iy), iz).y * src_extent.y;
+	else
+	{
+		i0.y = floor(p0.y);
+		i1.y = ceil(p1.y);
+	}
+
+	vec4 colour = vec4(0, 0, 0, 1);
+
+	float count = 0;
+	for (float y = i0.y ; y <= i1.y ; y++) {
+		float wy = 1;
+		if (y < p0.y)
+			wy *= 1 - (p0.y - y);
+		if (y > p1.y)
+			wy *= 1 - (y - p1.y);
+		for (float x = i0.x; x <= i1.x; x++) {
+			float w = wy;
+			if (x < p0.x)
+				w *= 1 - (p0.x - x);
+			if (x > p1.x)
+				w *= 1 - (x - p1.x);
+			vec2 uv = (vec2(x, y) + 0.5) / src_extent;
+			colour.rgb += w * texture(source[iz], uv).rgb;
+			count += w;
+		}
+	}
+
+	colour /= count;
 	// Do colour correction here since there are no automatic conversion in hardware available.
 	colour = vec4(from_linear_to_srgb(colour.rgb), 1);
 

@@ -1227,6 +1227,7 @@ struct render_compute_distortion_ubo_data
 	struct xrt_normalized_rect pre_transforms[XRT_MAX_VIEWS];
 	struct xrt_normalized_rect post_transforms[XRT_MAX_VIEWS];
 	struct xrt_matrix_4x4 transforms[XRT_MAX_VIEWS];
+	struct xrt_rect_f32 source_sizes[XRT_MAX_VIEWS];
 };
 
 /*!
@@ -1294,6 +1295,7 @@ render_compute_projection_timewarp(struct render_compute *crc,
                                    VkSampler src_samplers[XRT_MAX_VIEWS],
                                    VkImageView src_image_views[XRT_MAX_VIEWS],
                                    const struct xrt_normalized_rect src_rects[XRT_MAX_VIEWS],
+                                   const struct xrt_vec2 src_sizes[XRT_MAX_VIEWS],
                                    const struct xrt_pose src_poses[XRT_MAX_VIEWS],
                                    const struct xrt_fov src_fovs[XRT_MAX_VIEWS],
                                    const struct xrt_pose new_poses[XRT_MAX_VIEWS],
@@ -1309,6 +1311,7 @@ render_compute_projection(struct render_compute *crc,                           
                           VkSampler src_samplers[XRT_MAX_VIEWS],                     //
                           VkImageView src_image_views[XRT_MAX_VIEWS],                //
                           const struct xrt_normalized_rect src_rects[XRT_MAX_VIEWS], //
+                          const struct xrt_vec2 src_sizes[XRT_MAX_VIEWS],            //
                           VkImage target_image,                                      //
                           VkImageView target_image_view,                             //
                           const struct render_viewport_data views[XRT_MAX_VIEWS]);   //
