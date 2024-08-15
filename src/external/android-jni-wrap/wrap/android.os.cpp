@@ -1,4 +1,4 @@
-// Copyright 2020-2021, Collabora, Ltd.
+// Copyright 2020-2024, Collabora, Ltd.
 // SPDX-License-Identifier: BSL-1.0
 // Author: Rylie Pavlik <rylie.pavlik@collabora.com>
 
@@ -27,6 +27,12 @@ ParcelFileDescriptor::Meta::Meta()
       detachFd(classRef().getMethod("detachFd", "()I")),
       close(classRef().getMethod("close", "()V")),
       checkError(classRef().getMethod("checkError", "()V")) {
+    MetaBaseDroppable::dropClassRef();
+}
+Environment::Meta::Meta()
+    : MetaBaseDroppable(Environment::getTypeName()),
+      getExternalStorageDirectory(classRef().getStaticMethod(
+          "getExternalStorageDirectory", "()Ljava/io/File;")) {
     MetaBaseDroppable::dropClassRef();
 }
 } // namespace android::os

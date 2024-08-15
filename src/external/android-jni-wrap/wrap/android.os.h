@@ -1,4 +1,4 @@
-// Copyright 2020-2021, Collabora, Ltd.
+// Copyright 2020-2024, Collabora, Ltd.
 // SPDX-License-Identifier: BSL-1.0
 // Author: Rylie Pavlik <rylie.pavlik@collabora.com>
 
@@ -10,6 +10,10 @@ namespace wrap {
 namespace android::os {
 class ParcelFileDescriptor;
 } // namespace android::os
+
+namespace java::io {
+class File;
+} // namespace java::io
 
 } // namespace wrap
 
@@ -182,6 +186,46 @@ class ParcelFileDescriptor : public ObjectWrapperBase {
         jni::method_t detachFd;
         jni::method_t close;
         jni::method_t checkError;
+
+        /*!
+         * Singleton accessor
+         */
+        static Meta &data() {
+            static Meta instance{};
+            return instance;
+        }
+
+      private:
+        Meta();
+    };
+};
+
+/*!
+ * Wrapper for android.os.Environment objects.
+ */
+class Environment : public ObjectWrapperBase {
+  public:
+    using ObjectWrapperBase::ObjectWrapperBase;
+    static constexpr const char *getTypeName() noexcept {
+        return "android/os/Environment";
+    }
+
+    /*!
+     * Wrapper for the getExternalStorageDirectory static method
+     *
+     * Java prototype:
+     * `public static java.io.File getExternalStorageDirectory();`
+     *
+     * JNI signature: ()Ljava/io/File;
+     *
+     */
+    static java::io::File getExternalStorageDirectory();
+
+    /*!
+     * Class metadata
+     */
+    struct Meta : public MetaBaseDroppable {
+        jni::method_t getExternalStorageDirectory;
 
         /*!
          * Singleton accessor
