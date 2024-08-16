@@ -252,12 +252,15 @@ comp_window_android_destroy(struct comp_target *ct)
 	struct comp_window_android *cwa = (struct comp_window_android *)ct;
 
 	struct xrt_instance *xinst = cwa->base.base.c->xinst;
-	xinst->android_instance->remove_surface_callback(xinst->android_instance,
-	                                                 comp_window_android_handle_surface_acquired,
-	                                                 XRT_ANDROID_SURFACE_EVENT_ACQUIRED, (void *)cwa);
-	xinst->android_instance->remove_surface_callback(xinst->android_instance,
-	                                                 comp_window_android_handle_surface_lost,
-	                                                 XRT_ANDROID_SURFACE_EVENT_LOST, (void *)cwa);
+
+	if (xinst->android_instance != NULL) {
+		xinst->android_instance->remove_surface_callback(xinst->android_instance,
+		                                                 comp_window_android_handle_surface_acquired,
+		                                                 XRT_ANDROID_SURFACE_EVENT_ACQUIRED, (void *)cwa);
+		xinst->android_instance->remove_surface_callback(xinst->android_instance,
+		                                                 comp_window_android_handle_surface_lost,
+		                                                 XRT_ANDROID_SURFACE_EVENT_LOST, (void *)cwa);
+	}
 
 	os_mutex_destroy(&cwa->surface_mutex);
 	comp_target_swapchain_cleanup(&cwa->base);
@@ -290,13 +293,16 @@ comp_window_android_create(struct comp_compositor *c)
 	os_mutex_init(&w->surface_mutex);
 
 	struct xrt_instance *xinst = c->xinst;
-	xinst->android_instance->register_surface_callback(xinst->android_instance,
-	                                                   comp_window_android_handle_surface_acquired,
-	                                                   XRT_ANDROID_SURFACE_EVENT_ACQUIRED, (void *)w);
-	xinst->android_instance->register_surface_callback(xinst->android_instance,
-	                                                   comp_window_android_handle_surface_lost,
-	                                                   XRT_ANDROID_SURFACE_EVENT_LOST, (void *)w);
-
+	if (xinst->android_instance != NULL) {
+		xinst->android_instance->register_surface_callback(xinst->android_instance,
+		                                                   comp_window_android_handle_surface_acquired,
+		                                                   XRT_ANDROID_SURFACE_EVENT_ACQUIRED, (void *)w);
+		xinst->android_instance->register_surface_callback(xinst->android_instance,
+		                                                   comp_window_android_handle_surface_lost,
+		                                                   XRT_ANDROID_SURFACE_EVENT_LOST, (void *)w);
+	} else {
+		COMP_WARN(w->base.base.c, "xinst->android_instance is null, not registering surface callbacks");
+	}
 	return &w->base.base;
 }
 
