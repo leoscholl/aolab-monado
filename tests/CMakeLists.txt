@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: BSL-1.0
 
 set(tests
+    tests_android_surface_callbacks # not actually android-dependent test
     tests_cxx_wrappers
     tests_deque
     tests_generic_callbacks
@@ -107,3 +108,10 @@ endif()
 if(XRT_HAVE_VULKAN AND XRT_HAVE_D3D11)
 	target_link_libraries(tests_aux_d3d_d3d11 PRIVATE comp_util aux_vk)
 endif()
+
+# Android surface callbacks - doesn't actually depend on Android
+target_sources(
+	tests_android_surface_callbacks
+	PRIVATE "${PROJECT_SOURCE_DIR}/src/xrt/auxiliary/android/android_surface_callbacks.cpp"
+	)
+target_link_libraries(tests_android_surface_callbacks PRIVATE xrt-interfaces xrt-external-openxr)

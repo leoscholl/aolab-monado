@@ -14,6 +14,7 @@
 
 #ifdef XRT_OS_ANDROID
 
+#include <xrt/xrt_android.h>
 #include <android/native_window.h>
 
 #ifdef __cplusplus
@@ -42,6 +43,30 @@ struct xrt_android_display_metrics
  * @note You must keep this around for as long as you're using the surface.
  */
 struct android_custom_surface;
+
+/*!
+ * @brief Register the native methods for org.freedesktop.monado.auxiliary.MonadoView.
+ *
+ * If this is loaded dynamically into another process, you'll need to call this, the auto-finding won't find it.
+ *
+ * @param env JNI environment pointer
+ *
+ * @public @memberof android_custom_surface
+ */
+int
+android_custom_surface_register(struct _JNIEnv *env);
+
+/*!
+ * @brief Register the native methods for org.freedesktop.monado.auxiliary.MonadoView.
+ *
+ * If this is loaded dynamically into another process, you'll need to call this, the auto-finding won't find it.
+ *
+ * @param env JNI environment pointer
+ *
+ * @public @memberof android_custom_surface
+ */
+int
+android_custom_surface_register(struct _JNIEnv *env);
 
 /*!
  * Start adding a custom surface to a window.
@@ -97,6 +122,42 @@ android_custom_surface_destroy(struct android_custom_surface **ptr_custom_surfac
  */
 ANativeWindow *
 android_custom_surface_wait_get_surface(struct android_custom_surface *custom_surface, uint64_t timeout_ms);
+
+/*!
+ * Register a surface event callback.
+ *
+ * @param custom_surface Pointer to self
+ * @param callback Function pointer for callback
+ * @param event_mask bitwise-OR of one or more values from @ref xrt_android_surface_event
+ * @param userdata An opaque pointer for use by the callback. Whatever you pass here will be passed to the
+ * callback when invoked.
+ *
+ * @return 0 on success, <0 on error.
+ * @public @memberof android_custom_surface
+ */
+int
+android_custom_surface_register_callback(struct android_custom_surface *custom_surface,
+                                         xrt_android_surface_event_handler_t callback,
+                                         enum xrt_android_surface_event event_mask,
+                                         void *userdata);
+
+/*!
+ * Remove a surface event callback that matches the supplied parameters.
+ *
+ * @param custom_surface Pointer to self
+ * @param callback Function pointer for callback
+ * @param event_mask bitwise-OR of one or more values from @ref xrt_android_surface_event
+ * @param userdata An opaque pointer for use by the callback. Whatever you pass here will be passed to the
+ * callback when invoked.
+ *
+ * @return number of callbacks removed (typically 1) on success, <0 on error.
+ * @public @memberof android_custom_surface
+ */
+int
+android_custom_surface_remove_callback(struct android_custom_surface *custom_surface,
+                                       xrt_android_surface_event_handler_t callback,
+                                       enum xrt_android_surface_event event_mask,
+                                       void *userdata);
 
 bool
 android_custom_surface_get_display_metrics(struct _JavaVM *vm,

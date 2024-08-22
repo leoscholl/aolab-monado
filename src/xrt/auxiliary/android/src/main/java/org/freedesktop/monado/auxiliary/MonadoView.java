@@ -252,6 +252,7 @@ public class MonadoView extends SurfaceView
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
         synchronized (currentSurfaceHolderSync) {
             currentSurfaceHolder = surfaceHolder;
+            surfaceCreatedNative(surfaceHolder);
             currentSurfaceHolderSync.notifyAll();
         }
         Log.i(TAG, "surfaceCreated: Got a surface holder!");
@@ -286,6 +287,7 @@ public class MonadoView extends SurfaceView
             if (surfaceHolder == currentSurfaceHolder) {
                 currentSurfaceHolder = null;
                 lost = true;
+                surfaceDestroyedNative(surfaceHolder);
             }
         }
         if (lost) {
@@ -304,4 +306,8 @@ public class MonadoView extends SurfaceView
         //        currentSurfaceHolder = surfaceHolder;
         Log.i(TAG, "surfaceRedrawNeeded");
     }
+
+    private native void surfaceCreatedNative(SurfaceHolder surfaceHolder);
+
+    private native void surfaceDestroyedNative(SurfaceHolder surfaceHolder);
 }

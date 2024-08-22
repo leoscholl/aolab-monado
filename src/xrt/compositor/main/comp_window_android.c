@@ -10,8 +10,11 @@
  */
 
 #include "xrt/xrt_compiler.h"
+#include "xrt/xrt_instance.h"
+#include "xrt/xrt_android.h"
 
 #include "util/u_misc.h"
+#include "os/os_threading.h"
 
 #include "android/android_globals.h"
 #include "android/android_custom_surface.h"
@@ -42,6 +45,13 @@
 struct comp_window_android
 {
 	struct comp_target_swapchain base;
+	struct comp_target_create_images_info create_info;
+	void (*real_create_images)(struct comp_target *ct, const struct comp_target_create_images_info *create_info);
+
+	bool needs_create_images;
+
+	ANativeWindow *native_window;
+	struct os_mutex surface_mutex;
 
 	struct android_custom_surface *custom_surface;
 };
@@ -67,17 +77,6 @@ comp_window_android_init(struct comp_target *ct)
 	return true;
 }
 
-static void
-comp_window_android_destroy(struct comp_target *ct)
-{
-	struct comp_window_android *cwa = (struct comp_window_android *)ct;
-
-	comp_target_swapchain_cleanup(&cwa->base);
-
-	android_custom_surface_destroy(&cwa->custom_surface);
-
-	free(ct);
-}
 
 static void
 comp_window_android_update_window_title(struct comp_target *ct, const char *title)
@@ -143,15 +142,20 @@ comp_window_android_init_swapchain(struct comp_target *ct, uint32_t width, uint3
 	struct comp_window_android *cwa = (struct comp_window_android *)ct;
 	VkResult ret;
 
+	cwa->create_info.extent.width = width;
+	cwa->create_info.extent.height = height;
+
 	struct ANativeWindow *window = NULL;
 
 	if (android_globals_get_activity() != NULL) {
 		/* In process: Creating surface from activity */
+		COMP_INFO(cwa->base.base.c, "We have an activity, so assuming in-process.");
 		window = _create_android_window(cwa);
 	} else if (android_custom_surface_can_draw_overlays(android_globals_get_vm(), android_globals_get_context())) {
 		/* Out of process: Create surface */
 		window = _create_android_window(cwa);
 	} else {
+		COMP_INFO(cwa->base.base.c, "No activity, so assuming out-of-process.");
 		/* Out of process: Getting cached surface.
 		 * This loop polls for a surface created by Client.java in blockingConnect.
 		 * TODO: change java code to callback native code to notify Session lifecycle progress, instead
@@ -186,6 +190,86 @@ comp_window_android_flush(struct comp_target *ct)
 	(void)ct;
 }
 
+static void
+comp_window_android_create_images_stub(struct comp_target *ct, const struct comp_target_create_images_info *create_info)
+{
+
+	struct comp_window_android *cwa = (struct comp_window_android *)ct;
+	if (cwa->native_window != NULL) {
+		cwa->real_create_images(ct, create_info);
+		return;
+	}
+	cwa->create_info = *create_info;
+	cwa->needs_create_images = true;
+}
+
+static bool
+comp_window_android_handle_surface_acquired(struct xrt_instance_android *xinst_android,
+                                            struct _ANativeWindow *window,
+                                            enum xrt_android_surface_event event,
+                                            void *userdata)
+{
+	struct comp_window_android *cwa = (struct comp_window_android *)userdata;
+	COMP_INFO(cwa->base.base.c, "comp_window_android_handle_surface_acquired: got a surface!");
+	if (cwa->native_window == NULL) {
+		cwa->native_window = (ANativeWindow *)window;
+		VkResult ret = comp_window_android_create_surface(cwa, cwa->native_window, &cwa->base.surface.handle);
+		if (ret != VK_SUCCESS) {
+			COMP_ERROR(cwa->base.base.c, "Failed to create surface '%s'!", vk_result_string(ret));
+			return true;
+		}
+		if (cwa->needs_create_images) {
+			cwa->needs_create_images = false;
+			cwa->real_create_images(&cwa->base.base, &cwa->create_info);
+		}
+	}
+	return true;
+}
+
+static bool
+comp_window_android_handle_surface_lost(struct xrt_instance_android *xinst_android,
+                                        struct _ANativeWindow *window,
+                                        enum xrt_android_surface_event event,
+                                        void *userdata)
+{
+	struct comp_window_android *cwa = (struct comp_window_android *)userdata;
+	COMP_INFO(cwa->base.base.c, "comp_window_android_handle_surface_lost: oh noes!");
+	if (cwa->native_window == (ANativeWindow *)window) {
+		// yeah, we're losing this surface.
+		os_mutex_lock(&cwa->surface_mutex);
+
+		comp_target_swapchain_cleanup(&cwa->base);
+		cwa->native_window = NULL;
+
+		os_mutex_unlock(&cwa->surface_mutex);
+	}
+	return true;
+}
+
+static void
+comp_window_android_destroy(struct comp_target *ct)
+{
+	struct comp_window_android *cwa = (struct comp_window_android *)ct;
+
+	struct xrt_instance *xinst = cwa->base.base.c->xinst;
+
+	if (xinst->android_instance != NULL) {
+		xinst->android_instance->remove_surface_callback(xinst->android_instance,
+		                                                 comp_window_android_handle_surface_acquired,
+		                                                 XRT_ANDROID_SURFACE_EVENT_ACQUIRED, (void *)cwa);
+		xinst->android_instance->remove_surface_callback(xinst->android_instance,
+		                                                 comp_window_android_handle_surface_lost,
+		                                                 XRT_ANDROID_SURFACE_EVENT_LOST, (void *)cwa);
+	}
+
+	os_mutex_destroy(&cwa->surface_mutex);
+	comp_target_swapchain_cleanup(&cwa->base);
+
+	android_custom_surface_destroy(&cwa->custom_surface);
+
+	free(ct);
+}
+
 struct comp_target *
 comp_window_android_create(struct comp_compositor *c)
 {
@@ -202,6 +286,23 @@ comp_window_android_create(struct comp_compositor *c)
 	w->base.base.set_title = comp_window_android_update_window_title;
 	w->base.base.c = c;
 
+	// Intercept this call
+	w->real_create_images = w->base.base.create_images;
+	w->base.base.create_images = comp_window_android_create_images_stub;
+
+	os_mutex_init(&w->surface_mutex);
+
+	struct xrt_instance *xinst = c->xinst;
+	if (xinst->android_instance != NULL) {
+		xinst->android_instance->register_surface_callback(xinst->android_instance,
+		                                                   comp_window_android_handle_surface_acquired,
+		                                                   XRT_ANDROID_SURFACE_EVENT_ACQUIRED, (void *)w);
+		xinst->android_instance->register_surface_callback(xinst->android_instance,
+		                                                   comp_window_android_handle_surface_lost,
+		                                                   XRT_ANDROID_SURFACE_EVENT_LOST, (void *)w);
+	} else {
+		COMP_WARN(w->base.base.c, "xinst->android_instance is null, not registering surface callbacks");
+	}
 	return &w->base.base;
 }
 

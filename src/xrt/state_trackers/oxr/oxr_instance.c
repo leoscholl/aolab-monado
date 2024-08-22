@@ -51,6 +51,20 @@ DEBUG_GET_ONCE_BOOL_OPTION(debug_bindings, "OXR_DEBUG_BINDINGS", false)
 DEBUG_GET_ONCE_BOOL_OPTION(lifecycle_verbose, "OXR_LIFECYCLE_VERBOSE", false)
 
 
+#ifdef XRT_OS_ANDROID
+static bool
+on_activity_lifecycle_state_changed(struct xrt_instance_android *xinst_android,
+                                    enum xrt_android_lifecycle_event event,
+                                    void *userdata)
+{
+	struct oxr_instance *inst = (struct oxr_instance *)userdata;
+	inst->activity_state = event;
+
+	// Return false to not be removed from the list of callbacks
+	return false;
+}
+#endif // #ifdef XRT_OS_ANDROID
+
 static XrResult
 oxr_instance_destroy(struct oxr_logger *log, struct oxr_handle_base *hb)
 {
@@ -264,7 +278,8 @@ oxr_instance_create(struct oxr_logger *log,
 	// fill in our application info - @todo - replicate all createInfo
 	// fields?
 
-	struct xrt_instance_info i_info = {
+	struct xrt_instance_info i_info = {0};
+	i_info.app_info = (struct xrt_application_info){
 	    .ext_hand_tracking_enabled = extensions->EXT_hand_tracking,
 #ifdef OXR_HAVE_EXT_eye_gaze_interaction
 	    .ext_eye_gaze_interaction_enabled = extensions->EXT_eye_gaze_interaction,
@@ -282,14 +297,19 @@ oxr_instance_create(struct oxr_logger *log,
 	    .fb_face_tracking2_enabled = extensions->FB_face_tracking2,
 #endif
 	};
-	snprintf(i_info.application_name, sizeof(inst->xinst->instance_info.application_name), "%s",
+	snprintf(i_info.app_info.application_name, sizeof(i_info.app_info.application_name), "%s",
 	         createInfo->applicationInfo.applicationName);
 
 #ifdef XRT_OS_ANDROID
+	/// @todo should not depend on this, use loader init data instead
 	XrInstanceCreateInfoAndroidKHR const *create_info_android = OXR_GET_INPUT_FROM_CHAIN(
 	    createInfo, XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR, XrInstanceCreateInfoAndroidKHR);
+	/// @todo should be removed once we find a proper way to access JavaVM/context through
+	///       xrt_instance_android interface
 	android_globals_store_vm_and_activity((struct _JavaVM *)create_info_android->applicationVM,
 	                                      create_info_android->applicationActivity);
+	i_info.platform_info.vm = (struct _JavaVM *)create_info_android->applicationVM;
+	i_info.platform_info.context = create_info_android->applicationActivity;
 #endif
 
 
@@ -303,6 +323,17 @@ oxr_instance_create(struct oxr_logger *log,
 		oxr_instance_destroy(log, &inst->handle);
 		return ret;
 	}
+
+#ifdef XRT_OS_ANDROID
+	xret = xrt_instance_android_register_activity_lifecycle_callback(
+	    inst->xinst->android_instance, on_activity_lifecycle_state_changed,
+	    XRT_ANDROID_LIVECYCLE_EVENT_ON_RESUME | XRT_ANDROID_LIVECYCLE_EVENT_ON_PAUSE, inst);
+	// overlay application might be a service instead of an activity, so do not return error if
+	// failed to register activity lifecycle callback.
+	if (xret != XRT_SUCCESS) {
+		oxr_warn(log, "Failed to register activity lifecycle callback '%i'", xret);
+	}
+#endif // XRT_OS_ANDROID
 
 	struct oxr_system *sys = &inst->system;
 

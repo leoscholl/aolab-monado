@@ -34,7 +34,24 @@ else()
 		)
 endif()
 
+if(ANDROID)
+	target_sources(${RUNTIME_TARGET} PRIVATE jni_onload.c)
+	target_link_libraries(${RUNTIME_TARGET} PUBLIC aux_android)
+endif()
+
+# Handle symbol visibility
 if(NOT WIN32)
+	if(ANDROID)
+		# Android needs an extra symbol
+		set(VERSION_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/libopenxr-android.version)
+		set_property(
+			TARGET ${RUNTIME_TARGET}
+			APPEND_STRING
+			PROPERTY LINK_FLAGS " -u JNI_OnLoad"
+			)
+	else()
+		set(VERSION_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/libopenxr.version)
+	endif()
 	# Force the main "negotiate" symbol's inclusion
 	# and use a version script to ensure that's the only one we expose.
 	set_property(
@@ -42,13 +59,13 @@ if(NOT WIN32)
 		APPEND_STRING
 		PROPERTY
 			LINK_FLAGS
-			"-u xrNegotiateLoaderRuntimeInterface -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/libopenxr.version"
+			" -u xrNegotiateLoaderRuntimeInterface -Wl,--version-script=${VERSION_SCRIPT}"
 		)
 	# Re-link if the version script changes.
 	set_property(
 		TARGET ${RUNTIME_TARGET}
 		APPEND
-		PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/libopenxr.version"
+		PROPERTY LINK_DEPENDS "${VERSION_SCRIPT}"
 		)
 endif()
 
