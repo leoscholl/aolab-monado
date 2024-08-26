@@ -744,7 +744,7 @@ render_gfx_render_pass_init(struct render_gfx_render_pass *rgrp,
 	VK_NAME_PIPELINE(vk, rgrp->mesh.pipeline, "render_gfx_render_pass mesh pipeline");
 
 	struct mesh_params timewarp_params = {
-	    .do_timewarp = true,
+	    .do_timewarp = false,
 	};
 
 	ret = create_mesh_pipeline(         //

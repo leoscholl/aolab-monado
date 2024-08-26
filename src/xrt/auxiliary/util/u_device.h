@@ -84,6 +84,9 @@ u_device_setup_one_eye(struct xrt_device *xdev, const struct u_device_simple_inf
 bool
 u_device_setup_split_side_by_side(struct xrt_device *xdev, const struct u_device_simple_info *info);
 
+bool
+u_device_setup_fullscreen(struct xrt_device *xdev, const struct u_device_simple_info *info);
+
 /*!
  * Setup the device's display's 2D extents.
  * Good for headsets without traditional VR optics.
