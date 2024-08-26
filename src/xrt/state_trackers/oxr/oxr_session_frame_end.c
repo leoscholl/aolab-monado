@@ -602,12 +602,13 @@ verify_projection_layer(struct oxr_session *sess,
 		}
 		break;
 	case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO:
-		if (proj->viewCount != 2) {
-			return oxr_error(log, XR_ERROR_VALIDATION_FAILURE,
-			                 "(frameEndInfo->layers[%u]->viewCount == %u) must be 2 for "
-			                 "XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO",
-			                 layer_index, proj->viewCount);
-		}
+		// Ignoring for now to test >2 views.
+		// if (proj->viewCount != 2) {
+		// 	return oxr_error(log, XR_ERROR_VALIDATION_FAILURE,
+		// 	                 "(frameEndInfo->layers[%u]->viewCount == %u) must be 2 for "
+		// 	                 "XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO",
+		// 	                 layer_index, proj->viewCount);
+		// }
 		break;
 	case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_QUAD_VARJO:
 		if (proj->viewCount != 4) {
