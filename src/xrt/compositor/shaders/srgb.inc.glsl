@@ -2,6 +2,7 @@
 // Author: Jakob Bornecrantz <jakob@collabora.com>
 // SPDX-License-Identifier: BSL-1.0
 
+#define XRT_MAX_VIEWS 4
 
 float from_linear_to_srgb_channel(float value)
 {

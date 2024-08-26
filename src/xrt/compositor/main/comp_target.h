@@ -61,7 +61,7 @@ enum comp_target_display_timing_usage
 struct comp_target_image
 {
 	VkImage handle;
-	VkImageView view;
+	VkImageView views[2];
 };
 
 /*!

@@ -205,7 +205,7 @@ struct comp_scratch_stereo_images
 
 		//! Count always equals to the number of rsis.
 		struct xrt_image_native native_images[COMP_SCRATCH_NUM_IMAGES];
-	} views[2];
+	} views[XRT_MAX_VIEWS];
 
 	//! Process unique id, used for caching.
 	xrt_limited_unique_id_t limited_unique_id;

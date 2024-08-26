@@ -389,10 +389,10 @@ comp_scratch_stereo_images_init(struct comp_scratch_stereo_images *cssi)
 
 	indices_init(&cssi->indices);
 
-	u_native_images_debug_init(&cssi->views[0].unid);
-	u_native_images_debug_init(&cssi->views[1].unid);
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i)
+		u_native_images_debug_init(&cssi->views[i].unid);
 
-	for (uint32_t view = 0; view < 2; view++) {
+	for (uint32_t view = 0; view < XRT_MAX_VIEWS; view++) {
 		for (uint32_t i = 0; i < COMP_SCRATCH_NUM_IMAGES; i++) {
 			cssi->views[view].native_images[i].handle = XRT_GRAPHICS_BUFFER_HANDLE_INVALID;
 		}
@@ -411,21 +411,18 @@ comp_scratch_stereo_images_ensure(struct comp_scratch_stereo_images *cssi, struc
 	struct xrt_swapchain_create_info info = XRT_STRUCT_INIT;
 	fill_info(extent, &info);
 
-	struct tmp ts[2]; // Is initialized in function.
-	if (!tmp_init_and_create(&ts[0], vk, &info)) {
-		VK_ERROR(vk, "Failed to allocate images for view 0");
-		return false;
-	}
-
-	if (!tmp_init_and_create(&ts[1], vk, &info)) {
-		VK_ERROR(vk, "Failed to allocate images for view 1");
-		goto err_destroy;
+	struct tmp ts[XRT_MAX_VIEWS]; // Is initialized in function.
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i) {
+		if (!tmp_init_and_create(&ts[i], vk, &info)) {
+			VK_ERROR(vk, "Failed to allocate images for view #%u");
+			return false;
+		}
 	}
 
 	// Clear old information, we haven't touched this struct yet.
 	comp_scratch_stereo_images_free(cssi, vk);
 
-	for (uint32_t view = 0; view < 2; view++) {
+	for (uint32_t view = 0; view < XRT_MAX_VIEWS; view++) {
 		struct render_scratch_color_image images[COMP_SCRATCH_NUM_IMAGES];
 
 		tmp_take(&ts[view], cssi->views[view].native_images, images);
@@ -444,8 +441,8 @@ comp_scratch_stereo_images_ensure(struct comp_scratch_stereo_images *cssi, struc
 	return true;
 
 err_destroy:
-	tmp_destroy(&ts[0], vk);
-	tmp_destroy(&ts[1], vk);
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i)
+		tmp_destroy(&ts[i], vk);
 
 	return false;
 }
@@ -454,10 +451,10 @@ void
 comp_scratch_stereo_images_free(struct comp_scratch_stereo_images *cssi, struct vk_bundle *vk)
 {
 	// Make sure nothing refers to the images.
-	u_native_images_debug_clear(&cssi->views[0].unid);
-	u_native_images_debug_clear(&cssi->views[1].unid);
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i)
+		u_native_images_debug_clear(&cssi->views[i].unid);
 
-	for (uint32_t view = 0; view < 2; view++) {
+	for (uint32_t view = 0; view < XRT_MAX_VIEWS; view++) {
 		for (uint32_t i = 0; i < COMP_SCRATCH_NUM_IMAGES; i++) {
 			// Organised into views, then native images.
 			u_graphics_buffer_unref(&cssi->views[view].native_images[i].handle);
@@ -494,7 +491,7 @@ comp_scratch_stereo_images_done(struct comp_scratch_stereo_images *cssi)
 	assert(cssi->info.width > 0);
 	assert(cssi->info.height > 0);
 
-	for (uint32_t view = 0; view < 2; view++) {
+	for (uint32_t view = 0; view < XRT_MAX_VIEWS; view++) {
 		u_native_images_debug_set(           //
 		    &cssi->views[view].unid,         //
 		    cssi->limited_unique_id,         //
@@ -511,21 +508,21 @@ comp_scratch_stereo_images_discard(struct comp_scratch_stereo_images *cssi)
 {
 	indices_discard(&cssi->indices);
 
-	u_native_images_debug_clear(&cssi->views[0].unid);
-	u_native_images_debug_clear(&cssi->views[1].unid);
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i)
+		u_native_images_debug_clear(&cssi->views[i].unid);
 }
 
 void
 comp_scratch_stereo_images_clear_debug(struct comp_scratch_stereo_images *cssi)
 {
-	u_native_images_debug_clear(&cssi->views[0].unid);
-	u_native_images_debug_clear(&cssi->views[1].unid);
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i)
+		u_native_images_debug_clear(&cssi->views[i].unid);
 }
 
 void
 comp_scratch_stereo_images_destroy(struct comp_scratch_stereo_images *cssi)
 {
 	// Make sure nothing refers to the images.
-	u_native_images_debug_destroy(&cssi->views[0].unid);
-	u_native_images_debug_destroy(&cssi->views[1].unid);
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i)
+		u_native_images_debug_destroy(&cssi->views[i].unid);
 }

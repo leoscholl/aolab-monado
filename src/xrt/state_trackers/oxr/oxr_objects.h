@@ -1474,7 +1474,7 @@ struct oxr_system
 
 	XrFormFactor form_factor;
 	XrViewConfigurationType view_config_type;
-	XrViewConfigurationView views[2];
+	XrViewConfigurationView views[XRT_MAX_VIEWS];
 	uint32_t blend_mode_count;
 	XrEnvironmentBlendMode blend_modes[3];
 
@@ -1485,7 +1485,7 @@ struct oxr_system
 	struct xrt_system_roles dynamic_roles_cache;
 	struct os_mutex sync_actions_mutex;
 
-	struct xrt_visibility_mask *visibility_mask[2];
+	struct xrt_visibility_mask *visibility_mask[XRT_MAX_VIEWS];
 
 #ifdef OXR_HAVE_MNDX_xdev_space
 	bool supports_xdev_space;

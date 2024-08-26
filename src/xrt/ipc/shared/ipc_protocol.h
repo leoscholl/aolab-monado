@@ -262,7 +262,7 @@ struct ipc_shared_memory
 				uint32_t w_pixels;
 				uint32_t h_pixels;
 			} display;
-		} views[2];
+		} views[XRT_MAX_VIEWS];
 		// view count
 		uint32_t view_count;
 		enum xrt_blend_mode blend_modes[XRT_MAX_DEVICE_BLEND_MODES];
