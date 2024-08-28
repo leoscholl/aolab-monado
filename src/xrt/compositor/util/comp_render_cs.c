@@ -26,6 +26,7 @@
 #include "util/comp_render.h"
 #include "util/comp_render_helpers.h"
 #include "util/comp_base.h"
+#include "xrt/xrt_limits.h"
 
 
 /*
@@ -134,7 +135,7 @@ do_cs_projection_layer(const struct xrt_layer_data *data,
 	if (data->type == XRT_LAYER_PROJECTION_DEPTH) {
 		uint32_t d_array_index = dvd->sub.array_index;
 		const struct comp_swapchain_image *d_image =
-		    &layer->sc_array[sc_array_index + 2]->images[dvd->sub.image_index];
+		    &layer->sc_array[sc_array_index + XRT_MAX_VIEWS]->images[dvd->sub.image_index];
 
 		src_samplers[cur_image] = clamp_to_edge; // Edge to keep depth stable at edges.
 		src_image_views[cur_image] = get_image_view(d_image, data->flags, d_array_index);
