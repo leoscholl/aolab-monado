@@ -70,8 +70,6 @@ if(XRT_BUILD_DRIVER_CAVEXR)
 
 	target_link_libraries(drv_cavexr PRIVATE xrt-interfaces aux_util xrt-external-dtrack xrt-external-imgui-sdl2)
 	list(APPEND ENABLED_HEADSET_DRIVERS cavexr)
-
-	set_property(TARGET drv_cavexr PROPERTY CXX_STANDARD 23)
 endif()
 
 if(XRT_BUILD_DRIVER_TWRAP)
