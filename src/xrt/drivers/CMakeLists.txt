@@ -65,12 +65,10 @@ if(XRT_BUILD_DRIVER_CAVEXR)
 			cavexr/cavexr_prober.c
 			cavexr/cavexr_flystick.cpp cavexr/cavexr_flystick.h
 			cavexr/dtrack.cpp cavexr/dtrack.hpp
+			"${CMAKE_SOURCE_DIR}/src/external/glad/src/gl.c"
 	)
 
-	target_include_directories(drv_cavexr
-			PRIVATE "${CMAKE_SOURCE_DIR}/src/external/glad/include"
-			PRIVATE "${CMAKE_SOURCE_DIR}/src/external/imgui/imgui")
-	target_link_libraries(drv_cavexr PRIVATE xrt-interfaces aux_util xrt-external-imgui xrt-external-glad xrt-external-dtrack)
+	target_link_libraries(drv_cavexr PRIVATE xrt-interfaces aux_util xrt-external-dtrack xrt-external-imgui-sdl2)
 	list(APPEND ENABLED_HEADSET_DRIVERS cavexr)
 
 	set_property(TARGET drv_cavexr PROPERTY CXX_STANDARD 23)
