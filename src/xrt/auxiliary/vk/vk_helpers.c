@@ -768,7 +768,11 @@ xrt_swapchain_usage_flag_string(enum xrt_swapchain_usage_bits bits, bool null_on
  */
 
 bool
-vk_get_memory_type(struct vk_bundle *vk, uint32_t type_bits, VkMemoryPropertyFlags memory_props, uint32_t *out_type_id)
+vk_get_memory_type(struct vk_bundle *vk,
+                   uint32_t type_bits,
+                   VkMemoryPropertyFlags memory_props,
+                   VkMemoryHeapFlags required_heap_flags,
+                   uint32_t *out_type_id)
 {
 
 	uint32_t i_supported = type_bits;
@@ -776,8 +780,14 @@ vk_get_memory_type(struct vk_bundle *vk, uint32_t type_bits, VkMemoryPropertyFla
 		uint32_t propertyFlags = vk->device_memory_props.memoryTypes[i].propertyFlags;
 		if ((i_supported & 1) == 1) {
 			if ((propertyFlags & memory_props) == memory_props) {
-				*out_type_id = i;
-				return true;
+				VkMemoryHeap heap = vk->device_memory_props
+				                        .memoryHeaps[vk->device_memory_props.memoryTypes[i].heapIndex];
+				VK_TRACE(vk, "Required heap flags: %u, currently checking: %u", required_heap_flags,
+				         heap.flags);
+				if ((heap.flags & required_heap_flags) == required_heap_flags) {
+					*out_type_id = i;
+					return true;
+				}
 			}
 		}
 		i_supported >>= 1;
@@ -823,11 +833,13 @@ vk_alloc_and_bind_image_memory(struct vk_bundle *vk,
 	}
 
 	uint32_t memory_type_index = UINT32_MAX;
-	bool bret = vk_get_memory_type(          //
-	    vk,                                  // vk_bundle
-	    memory_requirements.memoryTypeBits,  // type_bits
-	    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, // memory_props
-	    &memory_type_index);                 // out_type_id
+	VkMemoryHeapFlags device_group_heap_flags = VK_MEMORY_HEAP_DEVICE_LOCAL_BIT | VK_MEMORY_HEAP_MULTI_INSTANCE_BIT;
+	bool bret = vk_get_memory_type(                                       //
+	    vk,                                                               // vk_bundle
+	    memory_requirements.memoryTypeBits,                               // type_bits
+	    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,                              // memory_props
+	    vk->features.buffer_device_address ? device_group_heap_flags : 0, // required_heap_flags
+	    &memory_type_index);                                              // out_type_id
 	if (!bret) {
 		VK_ERROR(vk, "(%s) vk_get_memory_type: false\n\tFailed to find a matching memory type.", caller_name);
 		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -1027,6 +1039,7 @@ vk_create_image_advanced(struct vk_bundle *vk,
 	    vk,                                 // vk_bundle
 	    memory_requirements.memoryTypeBits, // type_bits
 	    memory_property_flags,              // memory_props
+	    0,                                  // required_heap_flags
 	    &memory_type_index);                // out_type_id
 	if (!bret) {
 		VK_ERROR(vk, "vk_get_memory_type: false\n\tFailed to find a matching memory type.");
@@ -1548,6 +1561,7 @@ vk_buffer_init(struct vk_bundle *vk,
 	    vk,                          // vk_bundle
 	    requirements.memoryTypeBits, // type_bits
 	    properties,                  // memory_props
+	    0,                           // required_heap_flags
 	    &memory_type_index);         // out_type_id
 	if (!bret) {
 		VK_ERROR(vk, "vk_get_memory_type: false\n\tFailed to find a matching memory type.");
