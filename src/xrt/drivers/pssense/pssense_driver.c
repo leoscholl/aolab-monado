@@ -272,6 +272,39 @@ struct pssense_input_state
 	float battery_charge_percent;
 };
 
+struct calib_vec3_i16 {
+	struct pssense_i16_le x;
+	struct pssense_i16_le y;
+	struct pssense_i16_le z;
+} __attribute__((packed));
+
+/*
+ * Not entirely sure if this is correct, but it does seem to work
+ * for getting the calibration values.
+ * */
+struct calib_data {
+	struct {
+		struct calib_vec3_i16 x_pos;
+		struct calib_vec3_i16 x_neg;
+		struct calib_vec3_i16 y_pos;
+		struct calib_vec3_i16 y_neg;
+		struct calib_vec3_i16 z_pos;
+		struct calib_vec3_i16 z_neg;
+	} accel;
+	struct {
+		struct pssense_i16_le bias[3];
+		struct calib_vec3_i16 x_pos;
+		struct calib_vec3_i16 x_neg;
+		struct calib_vec3_i16 y_pos;
+		struct calib_vec3_i16 y_neg;
+		struct calib_vec3_i16 z_pos;
+		struct calib_vec3_i16 z_neg;
+		struct pssense_i16_le speed[2];
+		struct pssense_i16_le unknown;
+
+	} gyro;
+} __attribute__((packed));
+
 /*!
  * A single PlayStation Sense Controller.
  *
@@ -316,6 +349,7 @@ struct pssense_device
 		bool button_states;
 		bool tracking;
 	} gui;
+	float sensitivities[6];
 };
 
 static uint32_t
@@ -513,14 +547,15 @@ static void
 pssense_update_fusion(struct pssense_device *pssense)
 {
 	struct xrt_vec3 gyro;
-	gyro.x = DEG_TO_RAD(pssense->state.gyro_raw.x * PSSENSE_GYRO_SCALE_DEG);
-	gyro.y = DEG_TO_RAD(pssense->state.gyro_raw.y * PSSENSE_GYRO_SCALE_DEG);
-	gyro.z = DEG_TO_RAD(pssense->state.gyro_raw.z * PSSENSE_GYRO_SCALE_DEG);
+	gyro.x = DEG_TO_RAD(pssense->state.gyro_raw.x * pssense->sensitivities[3]);
+	gyro.y = DEG_TO_RAD(pssense->state.gyro_raw.y * pssense->sensitivities[4]);
+	gyro.z = DEG_TO_RAD(pssense->state.gyro_raw.z * pssense->sensitivities[5]);
 
 	struct xrt_vec3 accel;
-	accel.x = pssense->state.accel_raw.x * PSSENSE_ACCEL_SCALE;
-	accel.y = pssense->state.accel_raw.y * PSSENSE_ACCEL_SCALE;
-	accel.z = pssense->state.accel_raw.z * PSSENSE_ACCEL_SCALE;
+	accel.x = pssense->state.accel_raw.x * pssense->sensitivities[0];
+	accel.y = pssense->state.accel_raw.y * pssense->sensitivities[1];
+	accel.z = pssense->state.accel_raw.z * pssense->sensitivities[2];
+
 
 	// TODO: Apply correction from calibration data
 
@@ -800,6 +835,41 @@ pssense_get_battery_status(struct xrt_device *xdev, bool *out_present, bool *out
 	return XRT_SUCCESS;
 }
 
+void get_sensitivities(uint8_t* calib_data, float* values) {
+	struct calib_data* data = (struct calib_data*)calib_data;
+
+	int16_t xn = pssense_i16_le_to_i16(&data->accel.x_neg.x);
+	int16_t xp = pssense_i16_le_to_i16(&data->accel.x_pos.x);
+	int16_t yn = pssense_i16_le_to_i16(&data->accel.y_neg.y);
+	int16_t yp = pssense_i16_le_to_i16(&data->accel.y_pos.y);
+	int16_t zn = pssense_i16_le_to_i16(&data->accel.z_neg.z);
+	int16_t zp = pssense_i16_le_to_i16(&data->accel.z_pos.z);
+
+	int16_t xbias = pssense_i16_le_to_i16(&data->gyro.bias[0]);
+	int16_t ybias = pssense_i16_le_to_i16(&data->gyro.bias[1]);
+	int16_t zbias = pssense_i16_le_to_i16(&data->gyro.bias[2]);
+
+	int16_t s1 = pssense_i16_le_to_i16(&data->gyro.speed[0]);
+	int16_t s2 = pssense_i16_le_to_i16(&data->gyro.speed[1]);
+
+	int16_t gxn = pssense_i16_le_to_i16(&data->gyro.x_neg.x);
+	int16_t gxp = pssense_i16_le_to_i16(&data->gyro.x_pos.x);
+	int16_t gyn = pssense_i16_le_to_i16(&data->gyro.y_neg.y);
+	int16_t gyp = pssense_i16_le_to_i16(&data->gyro.y_pos.y);
+	int16_t gzn = pssense_i16_le_to_i16(&data->gyro.z_neg.z);
+	int16_t gzp = pssense_i16_le_to_i16(&data->gyro.z_pos.z);
+
+	values[0] = MATH_GRAVITY_M_S2 / ((float)(xp - xn) / 2.0);
+	values[1] = MATH_GRAVITY_M_S2 / ((float)(yp - yn) / 2.0);
+	values[2] = MATH_GRAVITY_M_S2 / ((float)(zp - zn) / 2.0);
+
+	float speed = (float) (s1 + s2);
+
+	values[3] = speed / ((abs(gxp - xbias) + abs(gxn - xbias)));
+	values[4] = speed / ((abs(gyp - ybias) + abs(gyn - ybias)));
+	values[5] = speed / ((abs(gzp - zbias) + abs(gzn - zbias)));
+}
+
 /**
  * Retrieving the calibration data report will switch the Sense controller from compat mode into full mode.
  */
@@ -844,6 +914,8 @@ pssense_get_calibration_data(struct pssense_device *pssense)
 			}
 		}
 	} while (invalid_crc);
+
+	get_sensitivities(data, pssense->sensitivities);
 
 	// TODO: Parse calibration data into prefiler
 
