@@ -8,6 +8,7 @@
  * @ingroup drv_pssense
  */
 
+#include "xrt/xrt_defines.h"
 #include "xrt/xrt_prober.h"
 
 #include "os/os_threading.h"
@@ -94,6 +95,8 @@ enum pssense_input_index
 	PSSENSE_INDEX_THUMBSTICK_TOUCH,
 	PSSENSE_INDEX_GRIP_POSE,
 	PSSENSE_INDEX_AIM_POSE,
+
+	PSSENSE_INDEX_LAST,
 };
 
 const uint8_t INPUT_REPORT_ID = 0x31;
@@ -680,7 +683,7 @@ pssense_device_update_inputs(struct xrt_device *xdev)
 	// Lock the data.
 	os_mutex_lock(&pssense->lock);
 
-	for (uint32_t i = 0; i < (uint32_t)sizeof(enum pssense_input_index); i++) {
+	for (uint32_t i = 0; i < PSSENSE_INDEX_LAST; i++) {
 		pssense->base.inputs[i].timestamp = (int64_t)pssense->state.timestamp_ns;
 	}
 	pssense->base.inputs[PSSENSE_INDEX_PS_CLICK].value.boolean = pssense->state.ps_click;
@@ -941,6 +944,7 @@ pssense_found(struct xrt_prober *xp,
 	}
 
 	unsigned char product_name[128];
+	unsigned char serial[256];
 	ret = xrt_prober_get_string_descriptor( //
 	    xp,                                 //
 	    devices[index],                     //
@@ -952,12 +956,24 @@ pssense_found(struct xrt_prober *xp,
 		return -1;
 	}
 
+	ret = xrt_prober_get_string_descriptor( //
+	    xp,                                 //
+	    devices[index],                     //
+	    XRT_PROBER_STRING_SERIAL_NUMBER,    //
+	    serial,                             //
+	    sizeof(serial));                    //
+	if (ret <= 0) {
+		U_LOG_E("Failed to get serial number from Bluetooth device!");
+		return -1;
+	}
+
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_TRACKING_NONE;
-	struct pssense_device *pssense = U_DEVICE_ALLOCATE(struct pssense_device, flags, 23, 2);
+	struct pssense_device *pssense = U_DEVICE_ALLOCATE(struct pssense_device, flags, PSSENSE_INDEX_LAST, 2);
 	PSSENSE_DEBUG(pssense, "PlayStation Sense controller found");
 
 	pssense->base.name = XRT_DEVICE_PSSENSE;
 	snprintf(pssense->base.str, XRT_DEVICE_NAME_LEN, "%s", product_name);
+	snprintf(pssense->base.serial, XRT_DEVICE_NAME_LEN, "%s", serial);
 	pssense->base.update_inputs = pssense_device_update_inputs;
 	pssense->base.set_output = pssense_set_output;
 	pssense->base.get_tracked_pose = pssense_get_tracked_pose;
