@@ -1634,7 +1634,7 @@ CServerDriver_Monado::RunFrame()
 		// This event currently spams the console, so is currently commented out. see
 		// https://github.com/ValveSoftware/SteamVR-for-Linux/issues/307
 		case vr::VREvent_ActionBindingReloaded:
-			//ovrd_log("Process %d reloaded bindings\n", event.data.process.pid);
+			// ovrd_log("Process %d reloaded bindings\n", event.data.process.pid);
 		case vr::VREvent_TrackedDeviceRoleChanged:
 			// device roles are for legacy input
 		case vr::VREvent_ChaperoneUniverseHasChanged:

@@ -275,7 +275,8 @@ struct pssense_input_state
 	float battery_charge_percent;
 };
 
-struct calib_vec3_i16 {
+struct calib_vec3_i16
+{
 	struct pssense_i16_le x;
 	struct pssense_i16_le y;
 	struct pssense_i16_le z;
@@ -285,8 +286,10 @@ struct calib_vec3_i16 {
  * Not entirely sure if this is correct, but it does seem to work
  * for getting the calibration values.
  * */
-struct calib_data {
-	struct {
+struct calib_data
+{
+	struct
+	{
 		struct calib_vec3_i16 x_pos;
 		struct calib_vec3_i16 x_neg;
 		struct calib_vec3_i16 y_pos;
@@ -294,7 +297,8 @@ struct calib_data {
 		struct calib_vec3_i16 z_pos;
 		struct calib_vec3_i16 z_neg;
 	} accel;
-	struct {
+	struct
+	{
 		struct pssense_i16_le bias[3];
 		struct calib_vec3_i16 x_pos;
 		struct calib_vec3_i16 x_neg;
@@ -838,8 +842,10 @@ pssense_get_battery_status(struct xrt_device *xdev, bool *out_present, bool *out
 	return XRT_SUCCESS;
 }
 
-void get_sensitivities(uint8_t* calib_data, float* values) {
-	struct calib_data* data = (struct calib_data*)calib_data;
+void
+get_sensitivities(uint8_t *calib_data, float *values)
+{
+	struct calib_data *data = (struct calib_data *)calib_data;
 
 	int16_t xn = pssense_i16_le_to_i16(&data->accel.x_neg.x);
 	int16_t xp = pssense_i16_le_to_i16(&data->accel.x_pos.x);
@@ -866,7 +872,7 @@ void get_sensitivities(uint8_t* calib_data, float* values) {
 	values[1] = MATH_GRAVITY_M_S2 / ((float)(yp - yn) / 2.0);
 	values[2] = MATH_GRAVITY_M_S2 / ((float)(zp - zn) / 2.0);
 
-	float speed = (float) (s1 + s2);
+	float speed = (float)(s1 + s2);
 
 	values[3] = speed / ((abs(gxp - xbias) + abs(gxn - xbias)));
 	values[4] = speed / ((abs(gyp - ybias) + abs(gyn - ybias)));
