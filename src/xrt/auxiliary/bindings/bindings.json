@@ -321,6 +321,7 @@
 			"title": "PS VR2 Sense Controller",
 			"type": "tracked_controller",
 			"steamvr_controllertype": "oculus_touch",
+			"extension": "MNDX_pssense_controller",
 			"monado_device": "XRT_DEVICE_PSSENSE",
 
 			"subaction_paths": [

@@ -428,17 +428,6 @@
 
 
 /*
- * XR_FB_face_tracking2
- */
-#if defined(XR_FB_face_tracking2) && defined(XRT_FEATURE_OPENXR_FACE_TRACKING2_FB)
-#define OXR_HAVE_FB_face_tracking2
-#define OXR_EXTENSION_SUPPORT_FB_face_tracking2(_) _(FB_face_tracking2, FB_FACE_TRACKING2)
-#else
-#define OXR_EXTENSION_SUPPORT_FB_face_tracking2(_)
-#endif
-
-
-/*
  * XR_FB_composition_layer_alpha_blend
  */
 #if defined(XR_FB_composition_layer_alpha_blend) && defined(XRT_FEATURE_OPENXR_LAYER_FB_ALPHA_BLEND)
@@ -483,6 +472,17 @@
 	_(FB_composition_layer_depth_test, FB_COMPOSITION_LAYER_DEPTH_TEST)
 #else
 #define OXR_EXTENSION_SUPPORT_FB_composition_layer_depth_test(_)
+#endif
+
+
+/*
+ * XR_FB_face_tracking2
+ */
+#if defined(XR_FB_face_tracking2) && defined(XRT_FEATURE_OPENXR_FACE_TRACKING2_FB)
+#define OXR_HAVE_FB_face_tracking2
+#define OXR_EXTENSION_SUPPORT_FB_face_tracking2(_) _(FB_face_tracking2, FB_FACE_TRACKING2)
+#else
+#define OXR_EXTENSION_SUPPORT_FB_face_tracking2(_)
 #endif
 
 
@@ -682,6 +682,17 @@
 
 
 /*
+ * XR_MNDX_pssense_controller
+ */
+#if defined(XR_MNDX_pssense_controller) && defined(XRT_FEATURE_OPENXR_INTERACTION_MNDX)
+#define OXR_HAVE_MNDX_pssense_controller
+#define OXR_EXTENSION_SUPPORT_MNDX_pssense_controller(_) _(MNDX_pssense_controller, MNDX_PSSENSE_CONTROLLER)
+#else
+#define OXR_EXTENSION_SUPPORT_MNDX_pssense_controller(_)
+#endif
+
+
+/*
  * XR_MNDX_egl_enable
  */
 #if defined(XR_MNDX_egl_enable) && defined(XR_USE_PLATFORM_EGL) && defined(XR_USE_GRAPHICS_API_OPENGL)
@@ -795,11 +806,11 @@
     OXR_EXTENSION_SUPPORT_EXT_samsung_odyssey_controller(_) \
     OXR_EXTENSION_SUPPORT_BD_controller_interaction(_) \
     OXR_EXTENSION_SUPPORT_FB_body_tracking(_) \
-    OXR_EXTENSION_SUPPORT_FB_face_tracking2(_) \
     OXR_EXTENSION_SUPPORT_FB_composition_layer_alpha_blend(_) \
     OXR_EXTENSION_SUPPORT_FB_composition_layer_image_layout(_) \
     OXR_EXTENSION_SUPPORT_FB_composition_layer_settings(_) \
     OXR_EXTENSION_SUPPORT_FB_composition_layer_depth_test(_) \
+    OXR_EXTENSION_SUPPORT_FB_face_tracking2(_) \
     OXR_EXTENSION_SUPPORT_FB_display_refresh_rate(_) \
     OXR_EXTENSION_SUPPORT_FB_passthrough(_) \
     OXR_EXTENSION_SUPPORT_FB_touch_controller_pro(_) \
@@ -817,6 +828,7 @@
     OXR_EXTENSION_SUPPORT_HTC_vive_cosmos_controller_interaction(_) \
     OXR_EXTENSION_SUPPORT_HTC_vive_focus3_controller_interaction(_) \
     OXR_EXTENSION_SUPPORT_MNDX_ball_on_a_stick_controller(_) \
+    OXR_EXTENSION_SUPPORT_MNDX_pssense_controller(_) \
     OXR_EXTENSION_SUPPORT_MNDX_egl_enable(_) \
     OXR_EXTENSION_SUPPORT_MNDX_force_feedback_curl(_) \
     OXR_EXTENSION_SUPPORT_MNDX_hydra(_) \
