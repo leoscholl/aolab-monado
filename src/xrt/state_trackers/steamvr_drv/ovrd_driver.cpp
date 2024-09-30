@@ -865,6 +865,8 @@ public:
 			grip_name = XRT_INPUT_INDEX_GRIP_POSE;
 		} else if (m_xdev->name == XRT_DEVICE_PSMV) {
 			grip_name = XRT_INPUT_PSMV_GRIP_POSE;
+		} else if (m_xdev->name == XRT_DEVICE_PSSENSE) {
+			grip_name = XRT_INPUT_PSSENSE_GRIP_POSE;
 		} else if (m_xdev->name == XRT_DEVICE_DAYDREAM) {
 			grip_name = XRT_INPUT_DAYDREAM_POSE;
 		} else if (m_xdev->name == XRT_DEVICE_HYDRA) {
