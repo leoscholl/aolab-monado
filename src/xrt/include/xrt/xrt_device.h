@@ -319,10 +319,10 @@ struct xrt_device
 	 *
 	 * @see xrt_input_name
 	 */
-	void (*get_tracked_pose)(struct xrt_device *xdev,
-	                         enum xrt_input_name name,
-	                         int64_t at_timestamp_ns,
-	                         struct xrt_space_relation *out_relation);
+	xrt_result_t (*get_tracked_pose)(struct xrt_device *xdev,
+	                                 enum xrt_input_name name,
+	                                 int64_t at_timestamp_ns,
+	                                 struct xrt_space_relation *out_relation);
 
 	/*!
 	 * @brief Get relationship of hand joints to the tracking origin space as
@@ -574,13 +574,17 @@ xrt_device_update_inputs(struct xrt_device *xdev)
  *
  * @public @memberof xrt_device
  */
-static inline void
+static inline xrt_result_t
 xrt_device_get_tracked_pose(struct xrt_device *xdev,
                             enum xrt_input_name name,
                             int64_t at_timestamp_ns,
                             struct xrt_space_relation *out_relation)
 {
-	xdev->get_tracked_pose(xdev, name, at_timestamp_ns, out_relation);
+	if (xdev->get_tracked_pose == NULL) {
+		return XRT_ERROR_NOT_IMPLEMENTED;
+	}
+
+	return xdev->get_tracked_pose(xdev, name, at_timestamp_ns, out_relation);
 }
 
 /*!
