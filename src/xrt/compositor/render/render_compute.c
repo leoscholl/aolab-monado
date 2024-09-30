@@ -455,6 +455,7 @@ render_compute_projection_timewarp(struct render_compute *crc,
                                    VkSampler src_samplers[XRT_MAX_VIEWS],
                                    VkImageView src_image_views[XRT_MAX_VIEWS],
                                    const struct xrt_normalized_rect src_norm_rects[XRT_MAX_VIEWS],
+                                   const struct xrt_vec2 src_sizes[XRT_MAX_VIEWS],
                                    const struct xrt_pose src_poses[XRT_MAX_VIEWS],
                                    const struct xrt_fov src_fovs[XRT_MAX_VIEWS],
                                    const struct xrt_pose new_poses[XRT_MAX_VIEWS],
@@ -488,6 +489,8 @@ render_compute_projection_timewarp(struct render_compute *crc,
 		data->pre_transforms[i] = r->distortion.uv_to_tanangle[i];
 		data->transforms[i] = time_warp_matrix[i];
 		data->post_transforms[i] = src_norm_rects[i];
+		data->source_sizes[i].x = src_sizes[i].x;
+		data->source_sizes[i].y = src_sizes[i].y;
 	}
 
 	/*
@@ -592,6 +595,7 @@ render_compute_projection(struct render_compute *crc,
                           VkSampler src_samplers[XRT_MAX_VIEWS],
                           VkImageView src_image_views[XRT_MAX_VIEWS],
                           const struct xrt_normalized_rect src_norm_rects[XRT_MAX_VIEWS],
+                          const struct xrt_vec2 src_sizes[XRT_MAX_VIEWS],
                           VkImage target_image,
                           VkImageView target_image_view,
                           const struct render_viewport_data views[XRT_MAX_VIEWS])
@@ -611,6 +615,8 @@ render_compute_projection(struct render_compute *crc,
 	for (uint32_t i = 0; i < crc->r->view_count; ++i) {
 		data->views[i] = views[i];
 		data->post_transforms[i] = src_norm_rects[i];
+		data->source_sizes[i].x = src_sizes[i].x;
+		data->source_sizes[i].y = src_sizes[i].y;
 	}
 
 

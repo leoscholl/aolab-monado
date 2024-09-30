@@ -126,6 +126,8 @@ struct comp_render_dispatch_data
 
 		// Target image view for distortion.
 		VkImageView target_unorm_view;
+
+		struct xrt_vec2 scratch_size[XRT_MAX_VIEWS];
 	} cs;
 };
 
