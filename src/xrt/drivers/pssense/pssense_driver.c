@@ -9,6 +9,7 @@
  */
 
 #include "xrt/xrt_defines.h"
+#include "xrt/xrt_device.h"
 #include "xrt/xrt_prober.h"
 
 #include "os/os_threading.h"
@@ -949,8 +950,8 @@ pssense_found(struct xrt_prober *xp,
 		return -1;
 	}
 
-	unsigned char product_name[128];
-	unsigned char serial[256];
+	unsigned char product_name[XRT_DEVICE_NAME_LEN] = {0};
+	unsigned char serial[XRT_DEVICE_NAME_LEN] = {0};
 	ret = xrt_prober_get_string_descriptor( //
 	    xp,                                 //
 	    devices[index],                     //
