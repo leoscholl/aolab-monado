@@ -1,10 +1,11 @@
-// Copyright 2020-2021, Collabora, Ltd.
+// Copyright 2020-2024, Collabora, Ltd.
 // SPDX-License-Identifier: BSL-1.0
 // Author: Rylie Pavlik <rylie.pavlik@collabora.com>
 // Inline implementations: do not include on its own!
 
 #pragma once
 
+#include "java.io.h"
 #include <string>
 
 namespace wrap {
@@ -49,6 +50,11 @@ inline void ParcelFileDescriptor::close() {
 inline void ParcelFileDescriptor::checkError() const {
     assert(!isNull());
     return object().call<void>(Meta::data().checkError);
+}
+
+inline java::io::File Environment::getExternalStorageDirectory() {
+    return java::io::File(Meta::data().clazz().call<jni::Object>(
+        Meta::data().getExternalStorageDirectory));
 }
 
 } // namespace android::os
