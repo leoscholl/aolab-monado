@@ -1191,8 +1191,12 @@ vk_create_image_from_native(struct vk_bundle *vk,
 	 * VUID-VkMemoryAllocateInfo-allocationSize-02383
 	 * For AHardwareBuffer handles, the alloc size must be the size returned by
 	 * vkGetAndroidHardwareBufferPropertiesANDROID for the Android hardware buffer
+	 *
+	 * For VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT the size must be queried by the implementation
+	 * (See VkMemoryAllocateInfo manual page)
 	 */
-	if (handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID) {
+	if (handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID &&
+	    handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT) {
 		if (requirements.size == 0) {
 			/*
 			 * VUID-VkMemoryAllocateInfo-allocationSize-07899
