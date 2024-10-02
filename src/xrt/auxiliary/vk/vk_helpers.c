@@ -1186,13 +1186,32 @@ vk_create_image_from_native(struct vk_bundle *vk,
 #else
 #error "need port"
 #endif
-	if (requirements.size > image_native->size) {
-		VK_ERROR(vk, "size mismatch, exported %" PRIu64 " but requires %" PRIu64, image_native->size,
-		         requirements.size);
-		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
-	} else if (requirements.size < image_native->size) {
-		VK_WARN(vk, "size mismatch, exported %" PRIu64 " but requires %" PRIu64, image_native->size,
-		        requirements.size);
+
+	/*
+	 * VUID-VkMemoryAllocateInfo-allocationSize-02383
+	 * For AHardwareBuffer handles, the alloc size must be the size returned by
+	 * vkGetAndroidHardwareBufferPropertiesANDROID for the Android hardware buffer
+	 *
+	 * For VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT the size must be queried by the implementation
+	 * (See VkMemoryAllocateInfo manual page)
+	 */
+	if (handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID &&
+	    handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT) {
+		if (requirements.size == 0) {
+			/*
+			 * VUID-VkMemoryAllocateInfo-allocationSize-07899
+			 * For any handles other than AHardwareBuffer, size must be greater than 0
+			 */
+			VK_ERROR(vk, "size must be greater than 0");
+
+		} else if (requirements.size > image_native->size) {
+			VK_ERROR(vk, "size mismatch, exported %" PRIu64 " but requires %" PRIu64, image_native->size,
+			         requirements.size);
+			return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+		} else if (requirements.size < image_native->size) {
+			VK_WARN(vk, "size mismatch, exported %" PRIu64 " but requires %" PRIu64, image_native->size,
+			        requirements.size);
+		}
 	}
 
 	VkMemoryDedicatedAllocateInfoKHR dedicated_memory_info = {
