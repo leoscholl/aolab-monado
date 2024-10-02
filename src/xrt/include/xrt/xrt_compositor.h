@@ -981,8 +981,8 @@ enum xrt_thread_hint
  *
  * Common compositor client interface/base.
  *
- * A compositor is very much analogous to a `XrSession` but without any of the
- * input functionality, and does have the same life time as a `XrSession`.
+ * A compositor is very much analogous to an `XrSession` but without any of the
+ * input functionality, and does have the same lifetime as an `XrSession`.
  */
 struct xrt_compositor
 {
@@ -1385,7 +1385,7 @@ struct xrt_compositor
 	                                      enum xrt_perf_set_level level);
 
 	/*!
-	 * @brief Get the extents of the reference space’s bounds rectangle.
+	 * @brief Get the extents of the reference space's bounds rectangle.
 	 */
 	xrt_result_t (*get_reference_bounds_rect)(struct xrt_compositor *xc,
 	                                          enum xrt_reference_space_type reference_space_type,
@@ -2169,6 +2169,12 @@ struct xrt_image_native
 
 	/*!
 	 * Is the native buffer handle a DXGI handle?
+	 *
+	 * - If true, it is some kind of weird global handle, not reference counted, but
+	 *   widely compatible with various images. Ostensibly deprecated, but works the best
+	 *   on Windows.
+	 * - If false, it's either not Windows, or a reference counted "NT Handle"
+	 *   which has awkward limitations, such as "usually no depth images allowed".
 	 */
 	bool is_dxgi_handle;
 };
