@@ -334,6 +334,7 @@ option_with_deps(XRT_BUILD_DRIVER_WMR "Enable Windows Mixed Reality driver" DEPE
 option_with_deps(XRT_BUILD_DRIVER_XREAL_AIR "Enable Xreal Air HMD driver" DEPENDS XRT_HAVE_HIDAPI)
 option_with_deps(XRT_BUILD_DRIVER_SIMULAVR "Enable simula driver" DEPENDS XRT_HAVE_REALSENSE)
 option(XRT_BUILD_DRIVER_SIMULATED "Enable simulated driver" ON)
+option(XRT_BUILD_DRIVER_CAVEXR "Enable cave driver" ON)
 
 option(XRT_BUILD_SAMPLES "Enable compiling sample code implementations that will not be linked into any final targets" ON)
 set(XRT_IPC_MSG_SOCK_FILENAME monado_comp_ipc CACHE STRING "Service socket filename")
@@ -429,6 +430,7 @@ list(
 	"TWRAP"
 	"XREAL_AIR"
 	"STEAMVR_LIGHTHOUSE"
+	"CAVEXR"
 	)
 
 # Package name needs to be known by the native code itself.
@@ -624,6 +626,7 @@ message(STATUS "#    FEATURE_WINDOW_PEEK:                          ${XRT_FEATURE
 message(STATUS "#")
 message(STATUS "#    DRIVER_ANDROID:              ${XRT_BUILD_DRIVER_ANDROID}")
 message(STATUS "#    DRIVER_ARDUINO:              ${XRT_BUILD_DRIVER_ARDUINO}")
+message(STATUS "#    DRIVER_CAVEXR:               ${XRT_BUILD_DRIVER_CAVEXR}")
 message(STATUS "#    DRIVER_DAYDREAM:             ${XRT_BUILD_DRIVER_DAYDREAM}")
 message(STATUS "#    DRIVER_DEPTHAI:              ${XRT_BUILD_DRIVER_DEPTHAI}")
 message(STATUS "#    DRIVER_EUROC:                ${XRT_BUILD_DRIVER_EUROC}")

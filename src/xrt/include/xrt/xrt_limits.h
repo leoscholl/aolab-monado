@@ -19,7 +19,7 @@
 /*
  * Max number of views supported by a compositor, artificial limit.
  */
-#define XRT_MAX_VIEWS 2
+#define XRT_MAX_VIEWS 4
 
 /*!
  * Maximum number of handles sent in one call.

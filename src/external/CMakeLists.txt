@@ -211,3 +211,14 @@ add_library(xrt-external-vdf INTERFACE)
 target_include_directories(
 	xrt-external-vdf SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/valve-file-vdf
 	)
+
+# Dtrack
+
+add_library(xrt-external-dtrack STATIC
+	dtrack/src/DTrackData.cpp
+	dtrack/src/DTrackNet.cpp
+	dtrack/src/DTrackParse.cpp
+	dtrack/src/DTrackParser.cpp
+	dtrack/src/DTrackSDK.cpp)
+target_include_directories(xrt-external-dtrack PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dtrack/include)
+target_link_libraries(xrt-external-dtrack ws2_32)

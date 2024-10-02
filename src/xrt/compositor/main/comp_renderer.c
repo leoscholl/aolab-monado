@@ -163,7 +163,7 @@ struct comp_scratch_view_state
 /// Holds an array of @ref comp_scratch_view_state to match the number of views
 struct comp_render_scratch_state
 {
-	struct comp_scratch_view_state views[2];
+	struct comp_scratch_view_state views[XRT_MAX_VIEWS];
 };
 
 
@@ -363,15 +363,18 @@ renderer_build_rendering_target_resources(struct comp_renderer *r,
 
 	struct comp_compositor *c = r->c;
 
-	VkImageView image_view = r->c->target->images[index].view;
-	VkExtent2D extent = {r->c->target->width, r->c->target->height};
+    for (int i = 0; i < 2; ++i) {
+        VkImageView image_view = r->c->target->images[index].views[i];
+        VkExtent2D extent = {r->c->target->width, r->c->target->height};
 
-	render_gfx_target_resources_init( //
-	    rtr,                          //
-	    &c->nr,                       //
-	    &r->target_render_pass,       //
-	    image_view,                   //
-	    extent);                      //
+        render_gfx_target_resources_init( //
+                rtr,                          //
+                &c->nr,                       //
+                &r->target_render_pass,       //
+                image_view,                   //
+                extent,
+                i);                      //
+    }
 }
 
 /*!
@@ -588,7 +591,8 @@ renderer_init(struct comp_renderer *r, struct comp_compositor *c, VkExtent2D scr
 			    &r->c->nr,                       //
 			    &r->scratch_render_pass,         //
 			    rsci->srgb_view,                 //
-			    scratch_extent);                 //
+			    scratch_extent,
+                i % 2);                 //
 		}
 	}
 
@@ -1001,7 +1005,7 @@ dispatch_compute(struct comp_renderer *r,
 
 	// Target Vulkan resources..
 	VkImage target_image = r->c->target->images[r->acquired_buffer].handle;
-	VkImageView target_image_view = r->c->target->images[r->acquired_buffer].view;
+	VkImageView target_image_view = r->c->target->images[r->acquired_buffer].views[0];
 
 	// Target view information.
 	struct render_viewport_data views[XRT_MAX_VIEWS];

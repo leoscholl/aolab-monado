@@ -16,15 +16,15 @@ layout(constant_id = 1) const bool do_timewarp = false;
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler2D source[2];
-layout(set = 0, binding = 1) uniform sampler2D distortion[6];
+layout(set = 0, binding = 0) uniform sampler2D source[XRT_MAX_VIEWS];
+layout(set = 0, binding = 1) uniform sampler2D distortion[XRT_MAX_VIEWS*3];
 layout(set = 0, binding = 2) uniform writeonly restrict image2D target;
 layout(set = 0, binding = 3, std140) uniform restrict Config
 {
-	ivec4 views[2];
-	vec4 pre_transform[2];
-	vec4 post_transform[2];
-	mat4 transform[2];
+	ivec4 views[XRT_MAX_VIEWS];
+	vec4 pre_transform[XRT_MAX_VIEWS];
+	vec4 post_transform[XRT_MAX_VIEWS];
+	mat4 transform[XRT_MAX_VIEWS];
 } ubo;
 
 

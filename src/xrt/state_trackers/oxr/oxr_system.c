@@ -120,7 +120,9 @@ oxr_system_fill_in(
 	} else if (view_count == 2) {
 		sys->view_config_type = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 	} else {
-		assert(false && "view_count must be 1 or 2");
+		// Pretend it's stereo for now.
+		// assert(false && "view_count must be 1 or 2");
+		sys->view_config_type = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 	}
 	U_LOG_D("sys->view_config_type = %d", sys->view_config_type);
 	sys->dynamic_roles_cache = (struct xrt_system_roles)XRT_SYSTEM_ROLES_INIT;
@@ -579,7 +581,7 @@ oxr_system_enumerate_view_conf_views(struct oxr_logger *log,
 		OXR_TWO_CALL_FILL_IN_HELPER(log, viewCapacityInput, viewCountOutput, views, 1,
 		                            view_configuration_view_fill_in, sys->views, XR_SUCCESS);
 	} else {
-		OXR_TWO_CALL_FILL_IN_HELPER(log, viewCapacityInput, viewCountOutput, views, 2,
+		OXR_TWO_CALL_FILL_IN_HELPER(log, viewCapacityInput, viewCountOutput, views, 4,
 		                            view_configuration_view_fill_in, sys->views, XR_SUCCESS);
 	}
 }

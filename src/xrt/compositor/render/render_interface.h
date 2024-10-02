@@ -783,7 +783,7 @@ struct render_gfx_target_resources
 	VkExtent2D extent;
 
 	//! Framebuffer for this target, depends on given VkImageView.
-	VkFramebuffer framebuffer;
+	VkFramebuffer framebuffers[2];
 };
 
 /*!
@@ -796,7 +796,8 @@ render_gfx_target_resources_init(struct render_gfx_target_resources *rtr,
                                  struct render_resources *r,
                                  struct render_gfx_render_pass *rgrp,
                                  VkImageView target,
-                                 VkExtent2D extent);
+                                 VkExtent2D extent,
+                                 uint32_t framebuffer);
 
 /*!
  * Frees all resources held by the target, does not free the struct itself.
@@ -947,7 +948,10 @@ struct render_gfx_layer_quad_data
  * @public @memberof render_gfx
  */
 bool
-render_gfx_begin_target(struct render_gfx *rr, struct render_gfx_target_resources *rtr, const VkClearColorValue *color);
+render_gfx_begin_target(struct render_gfx *rr,
+                        struct render_gfx_target_resources *rtr,
+                        const VkClearColorValue *color,
+                        uint32_t framebuffer_id);
 
 /*!
  * @public @memberof render_gfx

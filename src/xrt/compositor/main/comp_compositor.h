@@ -143,7 +143,7 @@ struct comp_compositor
 	struct
 	{
 		// Per-view scratch images.
-		struct comp_scratch_single_images views[2];
+		struct comp_scratch_single_images views[XRT_MAX_VIEWS];
 	} scratch;
 
 	struct

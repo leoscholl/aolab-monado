@@ -56,6 +56,22 @@ if(XRT_BUILD_DRIVER_SIMULATED)
 	list(APPEND ENABLED_HEADSET_DRIVERS simulated)
 endif()
 
+if(XRT_BUILD_DRIVER_CAVEXR)
+	add_library(
+			drv_cavexr STATIC
+			cavexr/cavexr_debug.cpp cavexr/cavexr_debug.h
+			cavexr/cavexr.cpp cavexr/cavexr.h
+			cavexr/cavexr_interface.h
+			cavexr/cavexr_prober.c
+			cavexr/cavexr_flystick.cpp cavexr/cavexr_flystick.h
+			cavexr/dtrack.cpp cavexr/dtrack.hpp
+			"${CMAKE_SOURCE_DIR}/src/external/glad/src/gl.c"
+	)
+
+	target_link_libraries(drv_cavexr PRIVATE xrt-interfaces aux_util xrt-external-dtrack xrt-external-imgui-sdl2)
+	list(APPEND ENABLED_HEADSET_DRIVERS cavexr)
+endif()
+
 if(XRT_BUILD_DRIVER_TWRAP)
 	add_library(drv_twrap STATIC twrap/twrap_slam.c twrap/twrap_interface.h)
 	target_link_libraries(drv_twrap PRIVATE xrt-interfaces aux_util)

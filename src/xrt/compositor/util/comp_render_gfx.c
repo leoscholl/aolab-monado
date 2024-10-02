@@ -615,7 +615,8 @@ do_layers(struct render_gfx *rr,
 		render_gfx_begin_target(    //
 		    rr,                     //
 		    d->views[view].gfx.rtr, //
-		    color);                 //
+		    color,
+		    view % 2);                 //
 
 		render_gfx_begin_view( //
 		    rr,                //
@@ -680,77 +681,84 @@ static void
 do_mesh(struct render_gfx *rr,
         bool do_timewarp,
         const struct gfx_mesh_data *md,
-        const struct comp_render_dispatch_data *d)
-{
-	struct vk_bundle *vk = rr->r->vk;
-	VkResult ret;
+        const struct comp_render_dispatch_data *d) {
+    struct vk_bundle *vk = rr->r->vk;
+    VkResult ret;
 
-	/*
-	 * Reserve UBOs, create descriptor sets, and fill in any data a head of
-	 * time, if we ever want to copy UBO data this lets us do that easily
-	 * write a copy command before the other gfx commands.
-	 */
+    /*
+     * Reserve UBOs, create descriptor sets, and fill in any data a head of
+     * time, if we ever want to copy UBO data this lets us do that easily
+     * write a copy command before the other gfx commands.
+     */
 
-	struct gfx_mesh_state ms = XRT_STRUCT_INIT;
+    struct gfx_mesh_state ms = XRT_STRUCT_INIT;
 
-	for (uint32_t i = 0; i < d->view_count; i++) {
+    for (uint32_t i = 0; i < d->view_count; i++) {
 
-		struct render_gfx_mesh_ubo_data data = {
-		    .vertex_rot = d->views[i].gfx.vertex_rot,
-		    .post_transform = md->views[i].src_norm_rect,
-		};
+        struct render_gfx_mesh_ubo_data data = {
+                .vertex_rot = d->views[i].gfx.vertex_rot,
+                .post_transform = md->views[i].src_norm_rect,
+        };
 
-		// Extra arguments for timewarp.
-		if (do_timewarp) {
-			data.pre_transform = d->views[i].target_pre_transform;
+        // Extra arguments for timewarp.
+        if (do_timewarp) {
+            data.pre_transform = d->views[i].target_pre_transform;
 
-			render_calc_time_warp_matrix( //
-			    &md->views[i].src_pose,   //
-			    &md->views[i].src_fov,    //
-			    &d->views[i].world_pose,  //
-			    &data.transform);         //
-		}
+            render_calc_time_warp_matrix( //
+                    &md->views[i].src_pose,   //
+                    &md->views[i].src_fov,    //
+                    &d->views[i].world_pose,  //
+                    &data.transform);         //
+        }
 
-		ret = render_gfx_mesh_alloc_and_write( //
-		    rr,                                //
-		    &data,                             //
-		    md->views[i].src_sampler,          //
-		    md->views[i].src_image_view,       //
-		    &ms.descriptor_sets[i]);           //
-		VK_CHK_WITH_GOTO(ret, "render_gfx_mesh_alloc", err_no_memory);
+        ret = render_gfx_mesh_alloc_and_write( //
+                rr,                                //
+                &data,                             //
+                md->views[i].src_sampler,          //
+                md->views[i].src_image_view,       //
+                &ms.descriptor_sets[i]);           //
+        VK_CHK_WITH_GOTO(ret, "render_gfx_mesh_alloc", err_no_memory);
 
-		VK_NAME_DESCRIPTOR_SET(vk, ms.descriptor_sets[i], "render_gfx mesh descriptor sets");
-	}
+        VK_NAME_DESCRIPTOR_SET(vk, ms.descriptor_sets[i], "render_gfx mesh descriptor sets");
+    }
 
 
-	/*
-	 * Do command writing here.
-	 */
+    /*
+     * Do command writing here.
+     */
 
-	render_gfx_begin_target(       //
-	    rr,                        //
-	    d->gfx.rtr,                //
-	    &background_color_active); //
 
-	for (uint32_t i = 0; i < d->view_count; i++) {
-		// Convenience.
-		const struct render_viewport_data *viewport_data = &d->views[i].target_viewport_data;
 
-		render_gfx_begin_view( //
-		    rr,                //
-		    i,                 // view_index
-		    viewport_data);    // viewport_data
+    // Two framebuffers
+    for (uint32_t fb = 0; fb < 2; ++fb) {
+        // Every other view
+        render_gfx_begin_target(
+                rr,
+                d->gfx.rtr,
+                &background_color_active,
+                fb);
 
-		render_gfx_mesh_draw(      //
-		    rr,                    // rr
-		    i,                     // mesh_index
-		    ms.descriptor_sets[i], // descriptor_set
-		    do_timewarp);          // do_timewarp
+        for (uint32_t view = fb; view < d->view_count; view += 2) {
+            const struct render_viewport_data *viewport_data = &d->views[view].target_viewport_data;
 
-		render_gfx_end_view(rr);
-	}
+            render_gfx_begin_view(
+                    rr,
+                    view,
+                    viewport_data);
 
-	render_gfx_end_target(rr);
+            render_gfx_mesh_draw(
+                    rr,
+                    view,
+                    ms.descriptor_sets[view],
+                    do_timewarp);
+
+            render_gfx_end_view(rr);
+        }
+
+        render_gfx_end_target(rr);
+    }
+
+
 
 	return;
 
@@ -856,12 +864,16 @@ comp_render_gfx_dispatch(struct render_gfx *rr,
 
 	} else if (layer_count == 0) {
 		// Just clear the screen
-		render_gfx_begin_target(     //
-		    rr,                      //
-		    d->gfx.rtr,              //
-		    &background_color_idle); //
+        for (int fb = 0; fb < 2; ++fb) {
+            render_gfx_begin_target(     //
+                    rr,                      //
+                    d->gfx.rtr,              //
+                    &background_color_idle,
+                    fb); //
 
-		render_gfx_end_target(rr);
+            render_gfx_end_target(rr);
+        }
+
 	} else {
 		if (fast_path) {
 			U_LOG_W("Wanted fast path but no projection layer, falling back to layer squasher.");

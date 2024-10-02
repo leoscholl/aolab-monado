@@ -744,7 +744,7 @@ render_gfx_render_pass_init(struct render_gfx_render_pass *rgrp,
 	VK_NAME_PIPELINE(vk, rgrp->mesh.pipeline, "render_gfx_render_pass mesh pipeline");
 
 	struct mesh_params timewarp_params = {
-	    .do_timewarp = true,
+	    .do_timewarp = false,
 	};
 
 	ret = create_mesh_pipeline(         //
@@ -915,7 +915,8 @@ render_gfx_target_resources_init(struct render_gfx_target_resources *rtr,
                                  struct render_resources *r,
                                  struct render_gfx_render_pass *rgrp,
                                  VkImageView target,
-                                 VkExtent2D extent)
+                                 VkExtent2D extent,
+								 uint32_t framebuffer)
 {
 	struct vk_bundle *vk = r->vk;
 	VkResult ret;
@@ -927,9 +928,9 @@ render_gfx_target_resources_init(struct render_gfx_target_resources *rtr,
 	    rgrp->render_pass,    // render_pass,
 	    extent.width,         // width,
 	    extent.height,        // height,
-	    &rtr->framebuffer);   // out_external_framebuffer
+	    &rtr->framebuffers[framebuffer]);   // out_external_framebuffer
 	VK_CHK_WITH_RET(ret, "create_framebuffer", false);
-	VK_NAME_FRAMEBUFFER(vk, rtr->framebuffer, "render_gfx_target_resources framebuffer");
+	VK_NAME_FRAMEBUFFER(vk, rtr->framebuffers[framebuffer], "render_gfx_target_resources framebuffer");
 
 	// Set fields.
 	rtr->rgrp = rgrp;
@@ -943,7 +944,8 @@ render_gfx_target_resources_close(struct render_gfx_target_resources *rtr)
 {
 	struct vk_bundle *vk = vk_from_rtr(rtr);
 
-	D(Framebuffer, rtr->framebuffer);
+	D(Framebuffer, rtr->framebuffers[0]);
+	D(Framebuffer, rtr->framebuffers[1]);
 
 	U_ZERO(rtr);
 }
@@ -1044,7 +1046,7 @@ render_gfx_close(struct render_gfx *rr)
  */
 
 bool
-render_gfx_begin_target(struct render_gfx *rr, struct render_gfx_target_resources *rtr, const VkClearColorValue *color)
+render_gfx_begin_target(struct render_gfx *rr, struct render_gfx_target_resources *rtr, const VkClearColorValue *color, uint32_t framebuffer_id)
 {
 	struct vk_bundle *vk = vk_from_rr(rr);
 
@@ -1052,7 +1054,7 @@ render_gfx_begin_target(struct render_gfx *rr, struct render_gfx_target_resource
 	rr->rtr = rtr;
 
 	VkRenderPass render_pass = rtr->rgrp->render_pass;
-	VkFramebuffer framebuffer = rtr->framebuffer;
+	VkFramebuffer framebuffer = rtr->framebuffers[framebuffer_id];
 	VkExtent2D extent = rtr->extent;
 
 	begin_render_pass( //
@@ -1085,7 +1087,7 @@ render_gfx_begin_view(struct render_gfx *rr, uint32_t view, const struct render_
 	struct vk_bundle *vk = vk_from_rr(rr);
 
 	// We currently only support two views.
-	assert(view == 0 || view == 1);
+	// assert(view == 0 || view == 1);
 	assert(rr->rtr != NULL);
 
 

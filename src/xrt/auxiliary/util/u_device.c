@@ -264,6 +264,39 @@ u_device_setup_split_side_by_side(struct xrt_device *xdev, const struct u_device
 	return true;
 }
 
+bool
+u_device_setup_fullscreen(struct xrt_device *xdev, const struct u_device_simple_info *info)
+{
+	uint32_t w_pixels = info->display.w_pixels;
+	uint32_t h_pixels = info->display.h_pixels;
+	float w_meters = info->display.w_meters;
+	float h_meters = info->display.h_meters;
+
+	// Common
+	size_t idx = 0;
+	xdev->hmd->blend_modes[idx++] = XRT_BLEND_MODE_OPAQUE;
+	xdev->hmd->blend_mode_count = idx;
+
+	if (xdev->hmd->distortion.models == 0) {
+		xdev->hmd->distortion.models = XRT_DISTORTION_MODEL_NONE;
+		xdev->hmd->distortion.preferred = XRT_DISTORTION_MODEL_NONE;
+	}
+	xdev->hmd->screens[0].w_pixels = info->display.w_pixels;
+	xdev->hmd->screens[0].h_pixels = info->display.h_pixels;
+
+	for (int i = 0; i < XRT_MAX_VIEWS; ++i) {
+		xdev->hmd->views[i].display.w_pixels = w_pixels;
+		xdev->hmd->views[i].display.h_pixels = h_pixels;
+		xdev->hmd->views[i].viewport.x_pixels = 0;
+		xdev->hmd->views[i].viewport.y_pixels = 0;
+		xdev->hmd->views[i].viewport.w_pixels = w_pixels;
+		xdev->hmd->views[i].viewport.h_pixels = h_pixels;
+		xdev->hmd->views[i].rot = u_device_rotation_ident;
+	}
+
+	return true;
+}
+
 void *
 u_device_allocate(enum u_device_alloc_flags flags, size_t size, size_t input_count, size_t output_count)
 {
