@@ -38,6 +38,7 @@ struct android_device
 	const ASensor *accelerometer;
 	const ASensor *gyroscope;
 	ASensorEventQueue *event_queue;
+	ALooper *looper;
 	struct u_cardboard_distortion cardboard;
 
 
