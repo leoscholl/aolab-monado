@@ -61,7 +61,7 @@ simulated_prober_autoprobe(struct xrt_auto_prober *xap,
 	}
 
 	// Select the type of movement.
-	enum simulated_movement movement = SIMULATED_MOVEMENT_WOBBLE;
+	enum simulated_movement movement = SIMULATED_MOVEMENT_STATIONARY;
 	if (debug_get_bool_option_simulated_rotate()) {
 		movement = SIMULATED_MOVEMENT_ROTATE;
 	}

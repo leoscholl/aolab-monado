@@ -172,6 +172,38 @@ simulated_ref_space_usage(struct xrt_device *xdev,
 	return XRT_SUCCESS;
 }
 
+// display dimensions
+const double display_w_meters = 0.1296f;
+const double display_h_meters = 0.072f;
+const double lens_sep = 0.13f / 2.0f;
+const double lens_vertical_position_meters = 0.07f / 2.0f;
+
+void initialize_distortion_cop(struct u_panotools_values *vals, uint32_t view) {
+	
+	// center of projection
+	double hCOP = lens_sep / 2.0;
+	double vCOP = display_h_meters / 2.0;
+
+	if (view == 0) vals->lens_center.x = display_w_meters - hCOP;
+	else vals->lens_center.x = hCOP;
+	vals->lens_center.y = vCOP;
+}
+
+static bool
+simulated_compute_distortion(struct xrt_device *xdev, uint32_t view, float u, float v, struct xrt_uv_triplet *result)
+{
+	struct u_panotools_values distortion_vals = {
+	    .distortion_k = {0.819f, -0.241f, 0.324f, 0.098f, 0.0},
+	    .aberration_k = {0.9952420f, 1.0f, 1.0008074f},
+	    .scale = display_w_meters -
+	             lens_sep / 2.0, // Assume distortion is across the larger distance from lens center to edge
+	    .lens_center = {0, 0},
+	    .viewport_size = {display_w_meters, display_h_meters},
+	};
+	initialize_distortion_cop(&distortion_vals, view);
+	return u_compute_distortion_panotools(&distortion_vals, u, v, result);
+}
+
 
 /*
  *
@@ -217,12 +249,12 @@ simulated_hmd_create(enum simulated_movement movement, const struct xrt_pose *ce
 	// Setup info.
 	bool ret = true;
 	struct u_device_simple_info info;
-	info.display.w_pixels = 1280;
-	info.display.h_pixels = 720;
-	info.display.w_meters = 0.13f;
-	info.display.h_meters = 0.07f;
-	info.lens_horizontal_separation_meters = 0.13f / 2.0f;
-	info.lens_vertical_position_meters = 0.07f / 2.0f;
+	info.display.w_pixels = 2160;
+	info.display.h_pixels = 1200;
+	info.display.w_meters = display_w_meters;
+	info.display.h_meters = display_h_meters;
+	info.lens_horizontal_separation_meters = lens_sep;
+	info.lens_vertical_position_meters = lens_vertical_position_meters;
 
 	if (hmd->base.hmd->view_count == 1) {
 		info.fov[0] = 120.0f * (M_PI / 180.0f);
@@ -248,8 +280,10 @@ simulated_hmd_create(enum simulated_movement movement, const struct xrt_pose *ce
 	u_var_add_f32(hmd, &hmd->diameter_m, "diameter_m");
 	u_var_add_log_level(hmd, &hmd->log_level, "log_level");
 
-	// Distortion information, fills in xdev->compute_distortion().
-	u_distortion_mesh_set_none(&hmd->base);
+	hmd->base.hmd->distortion.models = XRT_DISTORTION_MODEL_COMPUTE;
+	hmd->base.hmd->distortion.preferred = XRT_DISTORTION_MODEL_COMPUTE;
+	hmd->base.compute_distortion = simulated_compute_distortion;
+	u_distortion_mesh_fill_in_compute(&hmd->base);
 
 	return &hmd->base;
 }
