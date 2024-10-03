@@ -1,0 +1,1 @@
+Clarify m_space_relation_from_pose sets all except sample time

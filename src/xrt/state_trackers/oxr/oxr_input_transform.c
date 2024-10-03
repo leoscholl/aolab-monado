@@ -373,6 +373,12 @@ oxr_input_transform_create_chain(struct oxr_logger *log,
 {
 	struct oxr_input_transform chain[OXR_MAX_INPUT_TRANSFORMS] = {0};
 
+	if (result_type == XR_ACTION_TYPE_VECTOR2F_INPUT &&
+	    (ends_with(bound_path_string, "/x") || ends_with(bound_path_string, "/y"))) {
+		// Can not bind float-sub path to vector2F, even if parent type is identity.
+		return false;
+	}
+
 	oxr_slog(slog, "\t\tAdding transform from '%s' to '%s'\n", xr_action_type_to_str(result_type),
 	         xrt_input_type_to_str(input_type));
 

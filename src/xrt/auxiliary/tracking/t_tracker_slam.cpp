@@ -775,7 +775,7 @@ flush_poses(TrackerSlam &t)
 		// TODO linear velocity from the VIT system
 		// Compute new relation based on new pose and velocities since last pose
 		xrt_space_relation rel{};
-		rel.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL;
+		rel.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME;
 		rel.pose = {nrot, npos};
 		rel.linear_velocity = (npos - lpos) / dt;
 		math_quat_finite_difference(&lrot, &nrot, dt, &rel.angular_velocity);

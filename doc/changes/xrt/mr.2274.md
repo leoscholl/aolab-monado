@@ -1,0 +1,1 @@
+Adjust defines for relations to handle sample time.

@@ -58,18 +58,15 @@ m_pose_is_identity(const struct xrt_pose *pose)
  * set.
  */
 static inline void
-m_space_relation_from_pose(const struct xrt_pose *pose, bool set_tracked, struct xrt_space_relation *out_relation)
+m_space_relation_from_pose(const struct xrt_pose *pose, bool set_pose_tracked, struct xrt_space_relation *out_relation)
 {
 	enum xrt_space_relation_flags flags =
-	    set_tracked ? XRT_SPACE_RELATION_BITMASK_ALL
-	                : (enum xrt_space_relation_flags)(XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
-	                                                  XRT_SPACE_RELATION_POSITION_VALID_BIT);
+	    set_pose_tracked ? XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME
+	                     : (enum xrt_space_relation_flags)(XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
+	                                                       XRT_SPACE_RELATION_POSITION_VALID_BIT);
 
 	struct xrt_space_relation relation = {
-	    flags,
-	    *pose,
-	    XRT_VEC3_ZERO,
-	    XRT_VEC3_ZERO,
+	    flags, *pose, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0,
 	};
 
 	*out_relation = relation;

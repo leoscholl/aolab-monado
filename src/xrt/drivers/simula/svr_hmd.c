@@ -91,7 +91,7 @@ svr_hmd_get_tracked_pose(struct xrt_device *xdev,
 	out_relation->pose =
 	    (struct xrt_pose)XRT_POSE_IDENTITY; // This is so that tracking overrides/multi driver just transforms us by
 	                                        // the tracker + offset from the tracker.
-	out_relation->relation_flags = XRT_SPACE_RELATION_BITMASK_ALL;
+	out_relation->relation_flags = XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME;
 }
 
 #define DEG_TO_RAD(DEG) (DEG * M_PI / 180.)

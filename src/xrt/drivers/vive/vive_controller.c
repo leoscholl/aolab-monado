@@ -127,9 +127,9 @@ get_pose(struct vive_controller_device *d,
          struct xrt_space_relation *out_relation)
 {
 	struct xrt_space_relation imu_relation = {0};
-	imu_relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL;
+	imu_relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME;
 	m_relation_history_get(d->fusion.relation_hist, at_timestamp_ns, &imu_relation);
-	imu_relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL; // Needed after history_get
+	imu_relation.relation_flags = XRT_SPACE_RELATION_BITMASK_ALL_BUT_SAMPLE_TIME; // Needed after history_get
 
 	// Get the offset to the pose (this is from libsurvive's reporting position currently)
 	struct xrt_pose pose_offset = XRT_POSE_IDENTITY;

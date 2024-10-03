@@ -524,7 +524,11 @@ oxr_space_locate(
 	location->locationFlags = xrt_to_xr_space_location_flags(result.relation_flags);
 
 	if (gaze_sample_time) {
-		(void)gaze_sample_time; //! @todo Implement.
+		if ((result.relation_flags & XRT_SPACE_RELATION_SAMPLE_TIME_VALID_BIT) != 0) {
+			// Convert monotonic time from a device back
+			gaze_sample_time->time =
+			    time_state_monotonic_to_ts_ns(sys->inst->timekeeping, result.sample_time_ns);
+		}
 	}
 
 	if (vel) {

@@ -41,31 +41,19 @@ constexpr xrt_space_relation_flags kFlagsValidTracked = (xrt_space_relation_flag
 
 
 constexpr xrt_space_relation kSpaceRelationNotValid = {
-    kFlagsNotValid,
-    kPoseOneY,
-    XRT_VEC3_ZERO,
-    XRT_VEC3_ZERO,
+    kFlagsNotValid, kPoseOneY, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0,
 };
 
 constexpr xrt_space_relation kSpaceRelationOneY = {
-    kFlagsValid,
-    kPoseOneY,
-    XRT_VEC3_ZERO,
-    XRT_VEC3_ZERO,
+    kFlagsValid, kPoseOneY, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0,
 };
 
 constexpr xrt_space_relation kSpaceRelationOneYTracked = {
-    kFlagsValidTracked,
-    kPoseOneY,
-    XRT_VEC3_ZERO,
-    XRT_VEC3_ZERO,
+    kFlagsValidTracked, kPoseOneY, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0,
 };
 
 constexpr xrt_space_relation kSpaceRelationOnlyOrientation = {
-    XRT_SPACE_RELATION_ORIENTATION_VALID_BIT,
-    {XRT_QUAT_IDENTITY, XRT_VEC3_ZERO},
-    XRT_VEC3_ZERO,
-    XRT_VEC3_ZERO,
+    XRT_SPACE_RELATION_ORIENTATION_VALID_BIT, {XRT_QUAT_IDENTITY, XRT_VEC3_ZERO}, XRT_VEC3_ZERO, XRT_VEC3_ZERO, 0,
 };
 
 constexpr xrt_space_relation kSpaceRelationOnlyPosition = {
@@ -76,6 +64,7 @@ constexpr xrt_space_relation kSpaceRelationOnlyPosition = {
     },
     XRT_VEC3_ZERO,
     XRT_VEC3_ZERO,
+    0,
 };
 
 
