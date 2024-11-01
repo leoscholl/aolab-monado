@@ -175,15 +175,17 @@ simulated_ref_space_usage(struct xrt_device *xdev,
 // display dimensions
 const double display_w_meters = 0.1296f;
 const double display_h_meters = 0.072f;
-const double lens_sep = 0.13f / 2.0f;
-const double lens_vertical_position_meters = 0.07f / 2.0f;
+const char *lens_sep_char, *lens_vertical_char;
 
 void initialize_distortion_cop(struct u_panotools_values *vals, uint32_t view) {
 	
 	// center of projection
+	lens_sep_char = getenv("BMI3D_LENS_SEP_METERS");
+	double lens_sep = atof(lens_sep_char);
 	double hCOP = lens_sep / 2.0;
 	double vCOP = display_h_meters / 2.0;
-
+	vals->scale = display_w_meters -
+	             lens_sep / 2.0; // Assume distortion is across the larger distance from lens center to edge
 	if (view == 0) vals->lens_center.x = display_w_meters - hCOP;
 	else vals->lens_center.x = hCOP;
 	vals->lens_center.y = vCOP;
@@ -195,8 +197,7 @@ simulated_compute_distortion(struct xrt_device *xdev, uint32_t view, float u, fl
 	struct u_panotools_values distortion_vals = {
 	    .distortion_k = {0.819f, -0.241f, 0.324f, 0.098f, 0.0},
 	    .aberration_k = {0.9952420f, 1.0f, 1.0008074f},
-	    .scale = display_w_meters -
-	             lens_sep / 2.0, // Assume distortion is across the larger distance from lens center to edge
+	    .scale = 1.0f,
 	    .lens_center = {0, 0},
 	    .viewport_size = {display_w_meters, display_h_meters},
 	};
@@ -253,8 +254,10 @@ simulated_hmd_create(enum simulated_movement movement, const struct xrt_pose *ce
 	info.display.h_pixels = 1200;
 	info.display.w_meters = display_w_meters;
 	info.display.h_meters = display_h_meters;
-	info.lens_horizontal_separation_meters = lens_sep;
-	info.lens_vertical_position_meters = lens_vertical_position_meters;
+	lens_sep_char = getenv("BMI3D_LENS_SEP_METERS");
+	lens_vertical_char = getenv("BMI3D_LENS_VERTICAL_METERS");
+	info.lens_horizontal_separation_meters = atof(lens_sep_char);
+	info.lens_vertical_position_meters = atof(lens_vertical_char);;
 
 	if (hmd->base.hmd->view_count == 1) {
 		info.fov[0] = 120.0f * (M_PI / 180.0f);
