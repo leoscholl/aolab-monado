@@ -195,7 +195,7 @@ static bool
 simulated_compute_distortion(struct xrt_device *xdev, uint32_t view, float u, float v, struct xrt_uv_triplet *result)
 {
 	struct u_panotools_values distortion_vals = {
-	    .distortion_k = {1.0f, -0.1f, 0.0, 0.0, 0.0},
+	    .distortion_k = {1.0f, 0.0, 0.0, 0.05, 0.0},
 	    .aberration_k = {0.995f, 1.0f, 1.005f},
 	    .scale = 1.0f,
 	    .lens_center = {0, 0},
