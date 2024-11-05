@@ -196,7 +196,7 @@ simulated_compute_distortion(struct xrt_device *xdev, uint32_t view, float u, fl
 {
 	struct u_panotools_values distortion_vals = {
 	    .distortion_k = {1.0f, 0.0, 0.0, 0.0, 0.1},
-	    .aberration_k = {1.0f, 1.0f, 1.0f},
+	    .aberration_k = {0.999f, 1.0f, 1.001f},
 	    .scale = 1.0f,
 	    .lens_center = {0, 0},
 	    .viewport_size = {display_w_meters, display_h_meters},
